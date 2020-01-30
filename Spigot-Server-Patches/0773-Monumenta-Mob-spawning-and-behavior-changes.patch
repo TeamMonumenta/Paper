@@ -1,0 +1,699 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Fri, 28 Dec 2018 22:21:40 -0500
+Subject: [PATCH] Monumenta - Mob spawning and behavior changes
+
+- Dolphins no longer have biome restrictions
+- Wither skeletons no longer attack piglins
+- Drowned no longer convert naturally
+- Charged creepers no longer cause mob head drops
+- Skeletons attack wolves instead of running from them
+- Iron golems no longer automatically attack monsters
+- Drowned no longer have biome restrictions
+- Ocelots spawn on any block
+- Ocelots, golems, phantoms, bees, dolphins, hoglins no longer spawn in peaceful from spawners
+- Allow wolves to spawn from spawners on any block when not in peaceful
+- Always allow slimes to spawn from spawners
+- Squid spawn from spawners regardless of sea level
+- All animals now can spawn from spawners regardless of light level so long as they are spawning in air above a non-air non-water block
+- Polar bears now use EntityAnimal spawn restrictions
+- Disable boss evokers summoning vexes / fangs
+- Skeletons can only shoot bows from main hand
+- Remove wither nether star drop
+- Giant AI
+- Increase Giant view distance
+- Endermen holding items are no longer always persistent
+- Foxes no longer flee players
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityAnimal.java b/src/main/java/net/minecraft/world/entity/animal/EntityAnimal.java
+index 4de0a733819d408e8b9a55b604f455281d7732c5..415c546c5eff04d3c8267a9071807ace65fa7259 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityAnimal.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityAnimal.java
+@@ -90,7 +90,7 @@ public abstract class EntityAnimal extends EntityAgeable {
+ 
+     @Override
+     public float a(BlockPosition blockposition, IWorldReader iworldreader) {
+-        return iworldreader.getType(blockposition.down()).a(Blocks.GRASS_BLOCK) ? 10.0F : iworldreader.y(blockposition) - 0.5F;
++        return super.a(blockposition, iworldreader); // Monumenta - use the default from EntityCreature with no grass block check
+     }
+ 
+     @Override
+@@ -116,6 +116,19 @@ public abstract class EntityAnimal extends EntityAgeable {
+     }
+ 
+     public static boolean b(EntityTypes<? extends EntityAnimal> entitytypes, GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn, BlockPosition blockposition, Random random) {
++        // MONUMENTA START
++        if (enummobspawn == EnumMobSpawn.SPAWNER) {
++            // Mob from a spawner
++            if (generatoraccess.getDifficulty() != net.minecraft.world.EnumDifficulty.PEACEFUL && // Not peaceful
++                !generatoraccess.getType(blockposition.down()).a(Blocks.AIR) &&  // Not above air
++                !generatoraccess.getFluid(blockposition).a(net.minecraft.tags.TagsFluid.WATER) && // Not above water
++                generatoraccess.getType(blockposition).a(Blocks.AIR)) { // Must be in air
++                return true;
++            }
++            // Disallow spawning from spawners otherwise, even if the default requirements are met
++            return false;
++        }
++        // MONUMENTA END
+         return generatoraccess.getType(blockposition.down()).a(Blocks.GRASS_BLOCK) && generatoraccess.getLightLevel(blockposition, 0) > 8;
+     }
+ 
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityBee.java b/src/main/java/net/minecraft/world/entity/animal/EntityBee.java
+index 1d1f71a995a99b2101891a7a5bda7bec5d67f118..c118885133891296f91990fb52b9c50cf480aa48 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityBee.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityBee.java
+@@ -35,6 +35,7 @@ import net.minecraft.world.EnumDifficulty;
+ import net.minecraft.world.damagesource.DamageSource;
+ import net.minecraft.world.effect.MobEffect;
+ import net.minecraft.world.effect.MobEffects;
++import net.minecraft.world.entity.EnumMobSpawn;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.EntityAgeable;
+ import net.minecraft.world.entity.EntityCreature;
+@@ -65,6 +66,7 @@ import net.minecraft.world.entity.ai.village.poi.VillagePlace;
+ import net.minecraft.world.entity.ai.village.poi.VillagePlaceRecord;
+ import net.minecraft.world.entity.ai.village.poi.VillagePlaceType;
+ import net.minecraft.world.entity.player.EntityHuman;
++import net.minecraft.world.level.GeneratorAccess;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.crafting.RecipeItemStack;
+ import net.minecraft.world.level.IWorldReader;
+@@ -574,6 +576,11 @@ public class EntityBee extends EntityAnimal implements IEntityAngerable, EntityB
+         return this.isBaby() ? entitysize.height * 0.5F : entitysize.height * 0.5F;
+     }
+ 
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        return super.a(generatoraccess, enummobspawn) && (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL || enummobspawn != EnumMobSpawn.SPAWNER);
++    }
++
+     @Override
+     public boolean b(float f, float f1) {
+         return false;
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityDolphin.java b/src/main/java/net/minecraft/world/entity/animal/EntityDolphin.java
+index 5d18e19eafd5dc01a6caa45075d8c0598f1bb709..900782875361a685935dc482c9830cf0eb863c84 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityDolphin.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityDolphin.java
+@@ -25,6 +25,7 @@ import net.minecraft.tags.TagsItem;
+ import net.minecraft.util.MathHelper;
+ import net.minecraft.world.DifficultyDamageScaler;
+ import net.minecraft.world.EnumHand;
++import net.minecraft.world.EnumDifficulty;
+ import net.minecraft.world.EnumInteractionResult;
+ import net.minecraft.world.damagesource.DamageSource;
+ import net.minecraft.world.effect.MobEffect;
+@@ -102,6 +103,11 @@ public class EntityDolphin extends EntityWaterAnimal {
+         return false;
+     }
+ 
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        return super.a(generatoraccess, enummobspawn) && (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL || enummobspawn != EnumMobSpawn.SPAWNER);
++    }
++
+     @Override
+     protected void a(int i) {}
+ 
+@@ -314,10 +320,8 @@ public class EntityDolphin extends EntityWaterAnimal {
+     }
+ 
+     public static boolean b(EntityTypes<EntityDolphin> entitytypes, GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn, BlockPosition blockposition, Random random) {
+-        if (blockposition.getY() > 45 && blockposition.getY() < generatoraccess.getSeaLevel()) {
+-            Optional<ResourceKey<BiomeBase>> optional = generatoraccess.i(blockposition);
+-
+-            return (!Objects.equals(optional, Optional.of(Biomes.OCEAN)) || !Objects.equals(optional, Optional.of(Biomes.DEEP_OCEAN))) && generatoraccess.getFluid(blockposition).a((Tag) TagsFluid.WATER);
++        if (enummobspawn == EnumMobSpawn.SPAWNER || (blockposition.getY() > (generatoraccess.getSeaLevel() - 20) && blockposition.getY() < generatoraccess.getSeaLevel())) {
++			return generatoraccess.getFluid(blockposition).a((Tag) TagsFluid.WATER);
+         } else {
+             return false;
+         }
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityFox.java b/src/main/java/net/minecraft/world/entity/animal/EntityFox.java
+index b7fa24318ef43918b6b10ff4ea8acb960527296e..6d3278448784743f1d5d6425569ede0e9df8f205 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityFox.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityFox.java
+@@ -105,7 +105,7 @@ public class EntityFox extends EntityAnimal {
+         return entity instanceof EntityChicken || entity instanceof EntityRabbit;
+     };
+     private static final Predicate<Entity> bv = (entity) -> {
+-        return !entity.bx() && IEntitySelector.e.test(entity);
++        return false;
+     };
+     private PathfinderGoal bw;
+     private PathfinderGoal bx;
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityGolem.java b/src/main/java/net/minecraft/world/entity/animal/EntityGolem.java
+index 474f099a772e9fa84249abc6aaafcb887d8b5958..0ed1203110be21add594c8da0a858b7c8a9577e6 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityGolem.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityGolem.java
+@@ -7,12 +7,21 @@ import net.minecraft.world.entity.EntityCreature;
+ import net.minecraft.world.entity.EntityTypes;
+ import net.minecraft.world.level.World;
+ 
++import net.minecraft.world.EnumDifficulty; // Monumenta
++import net.minecraft.world.entity.EnumMobSpawn; // Monumenta
++import net.minecraft.world.level.GeneratorAccess; // Monumenta
++
+ public abstract class EntityGolem extends EntityCreature {
+ 
+     protected EntityGolem(EntityTypes<? extends EntityGolem> entitytypes, World world) {
+         super(entitytypes, world);
+     }
+ 
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        return super.a(generatoraccess, enummobspawn) && (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL || enummobspawn != EnumMobSpawn.SPAWNER);
++    }
++
+     @Override
+     public boolean b(float f, float f1) {
+         return false;
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityIronGolem.java b/src/main/java/net/minecraft/world/entity/animal/EntityIronGolem.java
+index 5e2b49d120b724cb5a7ae00940ded4f4875ea8a1..2e4f3be6be663094d6ad725e750cbb37711ec110 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityIronGolem.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityIronGolem.java
+@@ -77,12 +77,8 @@ public class EntityIronGolem extends EntityGolem implements IEntityAngerable {
+         this.goalSelector.a(5, new PathfinderGoalOfferFlower(this));
+         this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 6.0F));
+         this.goalSelector.a(8, new PathfinderGoalRandomLookaround(this));
+-        this.targetSelector.a(1, new PathfinderGoalDefendVillage(this));
+         this.targetSelector.a(2, new PathfinderGoalHurtByTarget(this, new Class[0]));
+         this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, 10, true, false, this::a_));
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityInsentient.class, 5, false, false, (entityliving) -> {
+-            return entityliving instanceof IMonster && !(entityliving instanceof EntityCreeper);
+-        }));
+         this.targetSelector.a(4, new PathfinderGoalUniversalAngerReset<>(this, false));
+     }
+ 
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityOcelot.java b/src/main/java/net/minecraft/world/entity/animal/EntityOcelot.java
+index f3e9c73f28584bcccd6f82d8974eabe4b4a892fa..1fe400fddf6c24cd19efa941f815060c734a5458 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityOcelot.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityOcelot.java
+@@ -51,6 +51,8 @@ import net.minecraft.world.level.WorldAccess;
+ import net.minecraft.world.level.block.Blocks;
+ import net.minecraft.world.level.block.state.IBlockData;
+ 
++import net.minecraft.world.EnumDifficulty; // Monumenta
++
+ public class EntityOcelot extends EntityAnimal {
+ 
+     private static final RecipeItemStack bo = RecipeItemStack.a(Items.COD, Items.SALMON);
+@@ -63,6 +65,11 @@ public class EntityOcelot extends EntityAnimal {
+         this.eL();
+     }
+ 
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        return super.a(generatoraccess, enummobspawn) && (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL || enummobspawn != EnumMobSpawn.SPAWNER);
++    }
++
+     private boolean isTrusting() {
+         return (Boolean) this.datawatcher.get(EntityOcelot.bp);
+     }
+@@ -239,7 +246,7 @@ public class EntityOcelot extends EntityAnimal {
+     }
+ 
+     public static boolean c(EntityTypes<EntityOcelot> entitytypes, GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn, BlockPosition blockposition, Random random) {
+-        return random.nextInt(3) != 0;
++        return generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL;
+     }
+ 
+     @Override
+@@ -247,13 +254,9 @@ public class EntityOcelot extends EntityAnimal {
+         if (iworldreader.j((Entity) this) && !iworldreader.containsLiquid(this.getBoundingBox())) {
+             BlockPosition blockposition = this.getChunkCoordinates();
+ 
+-            if (blockposition.getY() < iworldreader.getSeaLevel()) {
+-                return false;
+-            }
+-
+             IBlockData iblockdata = iworldreader.getType(blockposition.down());
+ 
+-            if (iblockdata.a(Blocks.GRASS_BLOCK) || iblockdata.a((Tag) TagsBlock.LEAVES)) {
++            if (!iblockdata.a(Blocks.AIR)) {
+                 return true;
+             }
+         }
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityPolarBear.java b/src/main/java/net/minecraft/world/entity/animal/EntityPolarBear.java
+index 49f26d487229a732902d5bf48d305b0864e90d63..e46c69e7ba7fa97f6d7096efe5d2d473c02ad3a8 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityPolarBear.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityPolarBear.java
+@@ -102,7 +102,7 @@ public class EntityPolarBear extends EntityAnimal implements IEntityAngerable {
+     public static boolean c(EntityTypes<EntityPolarBear> entitytypes, GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn, BlockPosition blockposition, Random random) {
+         Optional<ResourceKey<BiomeBase>> optional = generatoraccess.i(blockposition);
+ 
+-        return !Objects.equals(optional, Optional.of(Biomes.FROZEN_OCEAN)) && !Objects.equals(optional, Optional.of(Biomes.DEEP_FROZEN_OCEAN)) ? b(entitytypes, generatoraccess, enummobspawn, blockposition, random) : generatoraccess.getLightLevel(blockposition, 0) > 8 && generatoraccess.getType(blockposition.down()).a(Blocks.ICE);
++        return b(entitytypes, generatoraccess, enummobspawn, blockposition, random); // Monumenta - use EntityAnimal spawn restrictions for polar bears
+     }
+ 
+     @Override
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntitySquid.java b/src/main/java/net/minecraft/world/entity/animal/EntitySquid.java
+index 1f5f3e0d209426b97e32b82dd15176b800f85816..9384df3328c40e20aaaf90e467f218e3c7bd16cf 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntitySquid.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntitySquid.java
+@@ -196,6 +196,11 @@ public class EntitySquid extends EntityWaterAnimal {
+     }
+ 
+     public static boolean b(EntityTypes<EntitySquid> entitytypes, GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn, BlockPosition blockposition, Random random) {
++        // MONUMENTA START
++        if (enummobspawn == EnumMobSpawn.SPAWNER) {
++            return generatoraccess.getDifficulty() != net.minecraft.world.EnumDifficulty.PEACEFUL && generatoraccess.getFluid(blockposition).a((Tag) TagsFluid.WATER);
++        }
++        // MONUMENTA END
+         final double maxHeight = generatoraccess.getMinecraftWorld().paperConfig.squidMaxSpawnHeight > 0 ? generatoraccess.getMinecraftWorld().paperConfig.squidMaxSpawnHeight : generatoraccess.getSeaLevel(); // Paper
+         return blockposition.getY() > generatoraccess.getMinecraftWorld().spigotConfig.squidSpawnRangeMin && blockposition.getY() < maxHeight; // Spigot // Paper
+     }
+diff --git a/src/main/java/net/minecraft/world/entity/animal/EntityWolf.java b/src/main/java/net/minecraft/world/entity/animal/EntityWolf.java
+index b44b1544f401c1a5127bed3239bfd60420d17329..76e188595dbc99700eee3d59f09d2c7794c9827d 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/EntityWolf.java
++++ b/src/main/java/net/minecraft/world/entity/animal/EntityWolf.java
+@@ -66,6 +66,8 @@ import net.minecraft.world.phys.Vec3D;
+ import org.bukkit.craftbukkit.event.CraftEventFactory;
+ import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
+ // CraftBukkit end
++import net.minecraft.world.entity.EnumMobSpawn; // Monumenta
++import net.minecraft.world.level.GeneratorAccess; // Monumenta
+ 
+ public class EntityWolf extends EntityTameableAnimal implements IEntityAngerable {
+ 
+@@ -91,6 +93,19 @@ public class EntityWolf extends EntityTameableAnimal implements IEntityAngerable
+         this.setTamed(false);
+     }
+ 
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        if (generatoraccess.getDifficulty() == net.minecraft.world.EnumDifficulty.PEACEFUL) {
++            return false;
++        } else if (enummobspawn == EnumMobSpawn.SPAWNER) {
++            // Spawner, allow spawning on any non-air block regardless of light
++            return !generatoraccess.getType(this.getChunkCoordinates().down()).isAir();
++        } else {
++            // Non-spawner, use default spawning rules
++            return super.a(generatoraccess, enummobspawn);
++        }
++    }
++
+     @Override
+     protected void initPathfinder() {
+         this.goalSelector.a(1, new PathfinderGoalFloat(this));
+diff --git a/src/main/java/net/minecraft/world/entity/boss/wither/EntityWither.java b/src/main/java/net/minecraft/world/entity/boss/wither/EntityWither.java
+index 635b1493eeb6c13cc5ef489bd747ac557bc131d8..ff27b2889066da0e391df2a8ec6159948460da12 100644
+--- a/src/main/java/net/minecraft/world/entity/boss/wither/EntityWither.java
++++ b/src/main/java/net/minecraft/world/entity/boss/wither/EntityWither.java
+@@ -536,16 +536,6 @@ public class EntityWither extends EntityMonster implements IRangedEntity {
+         }
+     }
+ 
+-    @Override
+-    protected void dropDeathLoot(DamageSource damagesource, int i, boolean flag) {
+-        super.dropDeathLoot(damagesource, i, flag);
+-        EntityItem entityitem = this.a((IMaterial) Items.NETHER_STAR);
+-
+-        if (entityitem != null) {
+-            entityitem.r();
+-        }
+-
+-    }
+ 
+     @Override
+     public void checkDespawn() {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityCreeper.java b/src/main/java/net/minecraft/world/entity/monster/EntityCreeper.java
+index b47f71ca1f1c8bbd1a521836d9cb5d676a33ec76..d69088c9cda2eca32c2bf270a59ccef965dbb82f 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityCreeper.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityCreeper.java
+@@ -305,7 +305,7 @@ public class EntityCreeper extends EntityMonster {
+     }
+ 
+     public boolean canCauseHeadDrop() {
+-        return this.isPowered() && this.bs < 1;
++        return false;
+     }
+ 
+     public void setCausedHeadDrop() {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityDrowned.java b/src/main/java/net/minecraft/world/entity/monster/EntityDrowned.java
+index e4794760fc918cccbdc3f8d10ab21dd9b6f29e8e..4ec1750c6e3274786bae5b3ac33580b556951ce1 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityDrowned.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityDrowned.java
+@@ -83,7 +83,6 @@ public class EntityDrowned extends EntityZombie implements IRangedEntity {
+         this.targetSelector.a(1, (new PathfinderGoalHurtByTarget(this, new Class[]{EntityDrowned.class})).a(EntityPigZombie.class));
+         this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, 10, true, false, this::i));
+         if ( world.spigotConfig.zombieAggressiveTowardsVillager ) this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, false)); // Paper
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
+         this.targetSelector.a(5, new PathfinderGoalNearestAttackableTarget<>(this, EntityTurtle.class, 10, true, false, EntityTurtle.bo));
+     }
+ 
+@@ -102,7 +101,7 @@ public class EntityDrowned extends EntityZombie implements IRangedEntity {
+         Optional<ResourceKey<BiomeBase>> optional = worldaccess.i(blockposition);
+         boolean flag = worldaccess.getDifficulty() != EnumDifficulty.PEACEFUL && a(worldaccess, blockposition, random) && (enummobspawn == EnumMobSpawn.SPAWNER || worldaccess.getFluid(blockposition).a((Tag) TagsFluid.WATER));
+ 
+-        return !Objects.equals(optional, Optional.of(Biomes.RIVER)) && !Objects.equals(optional, Optional.of(Biomes.FROZEN_RIVER)) ? random.nextInt(40) == 0 && a((GeneratorAccess) worldaccess, blockposition) && flag : random.nextInt(15) == 0 && flag;
++        return (enummobspawn == EnumMobSpawn.SPAWNER || random.nextInt(15) == 0) && flag;
+     }
+ 
+     private static boolean a(GeneratorAccess generatoraccess, BlockPosition blockposition) {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityEnderman.java b/src/main/java/net/minecraft/world/entity/monster/EntityEnderman.java
+index e993b1849beb60515c51ee4f37617faab63ca223..1d8af95669d234ffca08f93cf9f5e92bcccac6f1 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityEnderman.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityEnderman.java
+@@ -410,7 +410,7 @@ public class EntityEnderman extends EntityMonster implements IEntityAngerable {
+ 
+     @Override
+     public boolean isSpecialPersistence() {
+-        return super.isSpecialPersistence() || this.getCarried() != null;
++        return super.isSpecialPersistence(); // MONUMENTA - ignore carrying item
+     }
+ 
+     static class PathfinderGoalEndermanPickupBlock extends PathfinderGoal {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityEvoker.java b/src/main/java/net/minecraft/world/entity/monster/EntityEvoker.java
+index 2aa6b6ca93c25c59ad224348aad1bb34d9bbc6a3..8d9cb901b6ee9aba916ed672151ca3030b32d922 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityEvoker.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityEvoker.java
+@@ -62,7 +62,6 @@ public class EntityEvoker extends EntityIllagerWizard {
+         this.targetSelector.a(1, (new PathfinderGoalHurtByTarget(this, new Class[]{EntityRaider.class})).a(new Class[0])); // Paper - decompile fix
+         this.targetSelector.a(2, (new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true)).a(300));
+         this.targetSelector.a(3, (new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, false)).a(300));
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, false));
+     }
+ 
+     public static AttributeProvider.Builder eK() {
+@@ -221,7 +220,7 @@ public class EntityEvoker extends EntityIllagerWizard {
+ 
+         @Override
+         public boolean a() {
+-            if (!super.a()) {
++            if (!super.a() || EntityEvoker.this.getScoreboardTags().contains("boss_evoker_no_vex")) { // Monumenta - Disable boss evokers summoning vexes
+                 return false;
+             } else {
+                 int i = EntityEvoker.this.world.a(EntityVex.class, this.e, EntityEvoker.this, EntityEvoker.this.getBoundingBox().g(16.0D)).size();
+@@ -275,6 +274,14 @@ public class EntityEvoker extends EntityIllagerWizard {
+             super();
+         }
+ 
++        @Override
++        public boolean a() {
++            if (EntityEvoker.this.getScoreboardTags().contains("boss_evoker_no_fangs")) { // Monumenta - Disable boss evokers summoning fangs
++                return false;
++            }
++            return super.a();
++        }
++
+         @Override
+         protected int g() {
+             return 40;
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityGiantZombie.java b/src/main/java/net/minecraft/world/entity/monster/EntityGiantZombie.java
+index 3b004160da9a2aed440a3ccda538d78f91c61e87..7c155d5b6e182d0bdec3744e3b3613236f9de197 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityGiantZombie.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityGiantZombie.java
+@@ -9,6 +9,15 @@ import net.minecraft.world.entity.ai.attributes.GenericAttributes;
+ import net.minecraft.world.level.IWorldReader;
+ import net.minecraft.world.level.World;
+ 
++// Monumenta START
++import net.minecraft.world.damagesource.DamageSource;
++import net.minecraft.world.entity.EnumMonsterType;
++import net.minecraft.world.entity.player.EntityHuman;
++import net.minecraft.world.level.block.state.IBlockData;
++import net.minecraft.sounds.SoundEffect;
++import net.minecraft.sounds.SoundEffects;
++// Monumenta END
++
+ public class EntityGiantZombie extends EntityMonster {
+ 
+     public EntityGiantZombie(EntityTypes<? extends EntityGiantZombie> entitytypes, World world) {
+@@ -28,4 +37,50 @@ public class EntityGiantZombie extends EntityMonster {
+     public float a(BlockPosition blockposition, IWorldReader iworldreader) {
+         return iworldreader.y(blockposition) - 0.5F;
+     }
++
++    @Override
++    protected void initPathfinder() {
++        this.goalSelector.a(8, new net.minecraft.world.entity.ai.goal.PathfinderGoalLookAtPlayer(this, EntityHuman.class, 8.0F));
++        this.goalSelector.a(8, new net.minecraft.world.entity.ai.goal.PathfinderGoalRandomLookaround(this));
++        this.goalSelector.a(7, new net.minecraft.world.entity.ai.goal.PathfinderGoalRandomStrollLand(this, 1.0D));
++        this.goalSelector.a(2, new net.minecraft.world.entity.ai.goal.PathfinderGoalMeleeAttack(this, 1.0D, false));
++
++        this.targetSelector.a(2, new net.minecraft.world.entity.ai.goal.target.PathfinderGoalHurtByTarget(this, new Class[0]));
++        this.targetSelector.a(2, new net.minecraft.world.entity.ai.goal.target.PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true));
++    }
++
++    @Override
++    protected SoundEffect getSoundAmbient() {
++        return SoundEffects.ENTITY_ZOMBIE_AMBIENT;
++    }
++
++    // Seems to cover ambient and hurt frequency
++    @Override
++    protected float dH() {
++        return 0.3f;
++    }
++
++    @Override
++    protected SoundEffect getSoundHurt(DamageSource damagesource) {
++        return SoundEffects.ENTITY_ZOMBIE_HURT;
++    }
++
++    @Override
++    protected SoundEffect getSoundDeath() {
++        return SoundEffects.ENTITY_ZOMBIE_DEATH;
++    }
++
++    protected SoundEffect getSoundStep() {
++        return SoundEffects.ENTITY_ZOMBIE_STEP;
++    }
++
++    @Override
++    protected void b(BlockPosition blockposition, IBlockData iblockdata) {
++        this.playSound(this.getSoundStep(), 0.15F, 0.3F);
++    }
++
++    @Override
++    public EnumMonsterType getMonsterType() {
++        return EnumMonsterType.UNDEAD;
++    }
+ }
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityIllagerIllusioner.java b/src/main/java/net/minecraft/world/entity/monster/EntityIllagerIllusioner.java
+index fee9a5140f097225b5da58b18bfbd528dffdc77b..5ef03c406adac0cdbe3f46df80d7747bcc9973c9 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityIllagerIllusioner.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityIllagerIllusioner.java
+@@ -70,7 +70,6 @@ public class EntityIllagerIllusioner extends EntityIllagerWizard implements IRan
+         this.targetSelector.a(1, (new PathfinderGoalHurtByTarget(this, new Class[]{EntityRaider.class})).a(new Class[0])); // CraftBukkit - decompile error
+         this.targetSelector.a(2, (new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true)).a(300));
+         this.targetSelector.a(3, (new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, false)).a(300));
+-        this.targetSelector.a(3, (new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, false)).a(300));
+     }
+ 
+     public static AttributeProvider.Builder eK() {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityPhantom.java b/src/main/java/net/minecraft/world/entity/monster/EntityPhantom.java
+index 16c0c960aa1e4d35093b810c7648b5638175e106..729d3209b49bd9c4c87dfbd1f43d74535a0dbd5e 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityPhantom.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityPhantom.java
+@@ -42,6 +42,9 @@ import net.minecraft.world.level.WorldAccess;
+ import net.minecraft.world.level.levelgen.HeightMap;
+ import net.minecraft.world.phys.Vec3D;
+ 
++import net.minecraft.world.EnumDifficulty; // Monumenta
++import net.minecraft.world.level.GeneratorAccess; // Monumenta
++
+ public class EntityPhantom extends EntityFlying implements IMonster {
+ 
+     private static final DataWatcherObject<Integer> b = DataWatcher.a(EntityPhantom.class, DataWatcherRegistry.b);
+@@ -59,6 +62,11 @@ public class EntityPhantom extends EntityFlying implements IMonster {
+         this.lookController = new EntityPhantom.f(this);
+     }
+ 
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        return super.a(generatoraccess, enummobspawn) && (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL || enummobspawn != EnumMobSpawn.SPAWNER);
++    }
++
+     @Override
+     protected EntityAIBodyControl r() {
+         return new EntityPhantom.d(this);
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityPillager.java b/src/main/java/net/minecraft/world/entity/monster/EntityPillager.java
+index ea105fb86553f5212d616c976eaf2a16bf5b6561..ee78304f3242eafa7ad80cc9b9d773272d592b53 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityPillager.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityPillager.java
+@@ -73,7 +73,6 @@ public class EntityPillager extends EntityIllagerAbstract implements ICrossbow {
+         this.targetSelector.a(1, (new PathfinderGoalHurtByTarget(this, new Class[]{EntityRaider.class})).a(new Class[0])); // CraftBukkit - decompile error
+         this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true));
+         this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, false));
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
+     }
+ 
+     public static AttributeProvider.Builder eK() {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityRavager.java b/src/main/java/net/minecraft/world/entity/monster/EntityRavager.java
+index 16d5cae64887b82e67eeb61ccb714e6125ff0c09..f4be6e4e93805c23895f9d3e572dee7aedfc39be 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityRavager.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityRavager.java
+@@ -72,7 +72,6 @@ public class EntityRavager extends EntityRaider {
+         this.targetSelector.a(2, (new PathfinderGoalHurtByTarget(this, new Class[]{EntityRaider.class})).a(new Class[0])); // CraftBukkit - decompile error
+         this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true));
+         this.targetSelector.a(4, new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, true));
+-        this.targetSelector.a(4, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
+     }
+ 
+     @Override
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonAbstract.java b/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonAbstract.java
+index f8358e40c42f219232bf928f4e0073339a5e19d5..4b54e282ac45800d4955fe7c1b3dcd9662edc52a 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonAbstract.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonAbstract.java
+@@ -72,13 +72,12 @@ public abstract class EntitySkeletonAbstract extends EntityMonster implements IR
+     protected void initPathfinder() {
+         this.goalSelector.a(2, new PathfinderGoalRestrictSun(this));
+         this.goalSelector.a(3, new PathfinderGoalFleeSun(this, 1.0D));
+-        this.goalSelector.a(3, new PathfinderGoalAvoidTarget<>(this, EntityWolf.class, 6.0F, 1.0D, 1.2D));
+         this.goalSelector.a(5, new PathfinderGoalRandomStrollLand(this, 1.0D));
+         this.goalSelector.a(6, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 8.0F));
+         this.goalSelector.a(6, new PathfinderGoalRandomLookaround(this));
+         this.targetSelector.a(1, new PathfinderGoalHurtByTarget(this, new Class[0]));
+         this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true));
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
++        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityWolf.class, true));
+         this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityTurtle.class, 10, true, false, EntityTurtle.bo));
+     }
+ 
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonWither.java b/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonWither.java
+index 85ba95615963fd6b28c454b25992e7c5b7019ae5..4196c39e2f489d32af3bdcbf2f4fc1895ef53a1a 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonWither.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntitySkeletonWither.java
+@@ -36,7 +36,6 @@ public class EntitySkeletonWither extends EntitySkeletonAbstract {
+ 
+     @Override
+     protected void initPathfinder() {
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityPiglinAbstract.class, true));
+         super.initPathfinder();
+     }
+ 
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntitySlime.java b/src/main/java/net/minecraft/world/entity/monster/EntitySlime.java
+index 0af0b232ff1b6f1d58cf3fb543d32bd108be0af7..9045661e87d7b748539dab080a89899ed35fdc5b 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntitySlime.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntitySlime.java
+@@ -83,7 +83,6 @@ public class EntitySlime extends EntityInsentient implements IMonster {
+         this.targetSelector.a(1, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, 10, true, false, (entityliving) -> {
+             return Math.abs(entityliving.locY() - this.locY()) <= 4.0D;
+         }));
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
+     }
+ 
+     @Override
+@@ -331,6 +330,10 @@ public class EntitySlime extends EntityInsentient implements IMonster {
+ 
+     public static boolean c(EntityTypes<EntitySlime> entitytypes, GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn, BlockPosition blockposition, Random random) {
+         if (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL) {
++            if (enummobspawn == EnumMobSpawn.SPAWNER) {
++                return true;
++            }
++
+             if (Objects.equals(generatoraccess.i(blockposition), Optional.of(Biomes.SWAMP)) && blockposition.getY() > 50 && blockposition.getY() < 70 && random.nextFloat() < 0.5F && random.nextFloat() < generatoraccess.af() && generatoraccess.getLightLevel(blockposition) <= random.nextInt(8)) {
+                 return a(entitytypes, generatoraccess, enummobspawn, blockposition, random);
+             }
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityVindicator.java b/src/main/java/net/minecraft/world/entity/monster/EntityVindicator.java
+index f0eda0b83bab8e3a8adbb569b5997402b0e08e9a..7362ff22b334a606841363800e294099c33c76d6 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityVindicator.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityVindicator.java
+@@ -69,7 +69,6 @@ public class EntityVindicator extends EntityIllagerAbstract {
+         this.targetSelector.a(1, (new PathfinderGoalHurtByTarget(this, new Class[]{EntityRaider.class})).a(new Class[0])); // Paper - decompile fix
+         this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true));
+         this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, true));
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
+         this.targetSelector.a(4, new EntityVindicator.b(this));
+         this.goalSelector.a(8, new PathfinderGoalRandomStroll(this, 0.6D));
+         this.goalSelector.a(9, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 3.0F, 1.0F));
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityZombie.java b/src/main/java/net/minecraft/world/entity/monster/EntityZombie.java
+index 634416c354184bc6a2348c27c55e9868009ccd28..470cba97093ced919b4f9e58d7c8c00935d516f4 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityZombie.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityZombie.java
+@@ -121,7 +121,6 @@ public class EntityZombie extends EntityMonster {
+         this.targetSelector.a(1, (new PathfinderGoalHurtByTarget(this, new Class[0])).a(EntityPigZombie.class));
+         this.targetSelector.a(2, new PathfinderGoalNearestAttackableTarget<>(this, EntityHuman.class, true));
+         if ( world.spigotConfig.zombieAggressiveTowardsVillager ) this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityVillagerAbstract.class, false)); // Spigot
+-        this.targetSelector.a(3, new PathfinderGoalNearestAttackableTarget<>(this, EntityIronGolem.class, true));
+         this.targetSelector.a(5, new PathfinderGoalNearestAttackableTarget<>(this, EntityTurtle.class, 10, true, false, EntityTurtle.bo));
+     }
+ 
+@@ -225,8 +224,6 @@ public class EntityZombie extends EntityMonster {
+                 if (this.a((Tag) TagsFluid.WATER)) {
+                     ++this.bt;
+                     if (this.bt >= 600) {
+-                        this.startDrownedConversion(300);
+-                        this.lastTick = MinecraftServer.currentTick; // Paper - Make sure this is set at start of process - GH-1887
+                     }
+                 } else {
+                     this.bt = -1;
+diff --git a/src/main/java/net/minecraft/world/entity/monster/hoglin/EntityHoglin.java b/src/main/java/net/minecraft/world/entity/monster/hoglin/EntityHoglin.java
+index 375409f4b72edc7990da90460b30486fb2980fb6..669811764afb43c88d4bc6e5970713238aaa5326 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/hoglin/EntityHoglin.java
++++ b/src/main/java/net/minecraft/world/entity/monster/hoglin/EntityHoglin.java
+@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundEffect;
+ import net.minecraft.sounds.SoundEffects;
+ import net.minecraft.world.DifficultyDamageScaler;
+ import net.minecraft.world.EnumHand;
++import net.minecraft.world.EnumDifficulty;
+ import net.minecraft.world.EnumInteractionResult;
+ import net.minecraft.world.damagesource.DamageSource;
+ import net.minecraft.world.effect.MobEffect;
+@@ -54,7 +55,9 @@ public class EntityHoglin extends EntityAnimal implements IMonster, IOglin {
+     public int conversionTicks = 0;
+     public boolean cannotBeHunted = false;
+     protected static final ImmutableList<? extends SensorType<? extends Sensor<? super EntityHoglin>>> bo = ImmutableList.of(SensorType.c, SensorType.d, SensorType.n, SensorType.m);
+-    protected static final ImmutableList<? extends MemoryModuleType<?>> bp = ImmutableList.of(MemoryModuleType.BREED_TARGET, MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.LOOK_TARGET, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.PATH, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLIN, new MemoryModuleType[]{MemoryModuleType.AVOID_TARGET, MemoryModuleType.VISIBLE_ADULT_PIGLIN_COUNT, MemoryModuleType.VISIBLE_ADULT_HOGLIN_COUNT, MemoryModuleType.NEAREST_VISIBLE_ADULT_HOGLINS, MemoryModuleType.NEAREST_VISIBLE_ADULY, MemoryModuleType.NEAREST_REPELLENT, MemoryModuleType.PACIFIED});
++    // Monumenta - Decompile Error
++    protected static final ImmutableList<MemoryModuleType> bp = ImmutableList.of(MemoryModuleType.BREED_TARGET, MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.LOOK_TARGET, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.PATH, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLIN, new MemoryModuleType[]{MemoryModuleType.AVOID_TARGET, MemoryModuleType.VISIBLE_ADULT_PIGLIN_COUNT, 
++	MemoryModuleType.VISIBLE_ADULT_HOGLIN_COUNT, MemoryModuleType.NEAREST_VISIBLE_ADULT_HOGLINS, MemoryModuleType.NEAREST_VISIBLE_ADULY, MemoryModuleType.NEAREST_REPELLENT, MemoryModuleType.PACIFIED});
+ 
+     public EntityHoglin(EntityTypes<? extends EntityHoglin> entitytypes, World world) {
+         super(entitytypes, world);
+@@ -118,13 +121,18 @@ public class EntityHoglin extends EntityAnimal implements IMonster, IOglin {
+ 
+     @Override
+     public BehaviorController<EntityHoglin> getBehaviorController() {
+-        return super.getBehaviorController();
++        return (net.minecraft.world.entity.ai.BehaviorController<net.minecraft.world.entity.monster.hoglin.EntityHoglin>) super.getBehaviorController();
++    }
++
++    @Override
++    public boolean a(GeneratorAccess generatoraccess, EnumMobSpawn enummobspawn) {
++        return super.a(generatoraccess, enummobspawn) && (generatoraccess.getDifficulty() != EnumDifficulty.PEACEFUL || enummobspawn != EnumMobSpawn.SPAWNER);
+     }
+ 
+     @Override
+     protected void mobTick() {
+         this.world.getMethodProfiler().enter("hoglinBrain");
+-        this.getBehaviorController().a((WorldServer) this.world, (EntityLiving) this);
++        this.getBehaviorController().a((WorldServer) this.world, this); // Monumenta - Decompile Error
+         this.world.getMethodProfiler().exit();
+         HoglinAI.a(this);
+         if (this.isConverting()) {
+@@ -300,7 +308,7 @@ public class EntityHoglin extends EntityAnimal implements IMonster, IOglin {
+ 
+     @Override
+     protected SoundEffect getSoundAmbient() {
+-        return this.world.isClientSide ? null : (SoundEffect) HoglinAI.b(this).orElse((Object) null);
++        return this.world.isClientSide ? null : (SoundEffect) HoglinAI.b(this).orElse(null);
+     }
+ 
+     @Override
+diff --git a/src/main/java/net/minecraft/world/entity/projectile/ProjectileHelper.java b/src/main/java/net/minecraft/world/entity/projectile/ProjectileHelper.java
+index 75889ac851d1c2b26c0b57bea6b75c1b65c2309f..b44cc60f73d19ad9f373527d11f946d307b9b8a8 100644
+--- a/src/main/java/net/minecraft/world/entity/projectile/ProjectileHelper.java
++++ b/src/main/java/net/minecraft/world/entity/projectile/ProjectileHelper.java
+@@ -99,6 +99,7 @@ public final class ProjectileHelper {
+     }
+ 
+     public static EnumHand a(EntityLiving entityliving, Item item) {
++        if (Items.BOW == item) return EnumHand.MAIN_HAND; /* MONUMENTA - Only allow mobs to use bows from mainhand */
+         return entityliving.getItemInMainHand().getItem() == item ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND;
+     }
+ 
+diff --git a/src/main/java/org/spigotmc/TrackingRange.java b/src/main/java/org/spigotmc/TrackingRange.java
+index cd569ad95176fdd0537459b40dfba5c5127a62df..cfa2e800b64df68b815fe1e87da2429c63d6398e 100644
+--- a/src/main/java/org/spigotmc/TrackingRange.java
++++ b/src/main/java/org/spigotmc/TrackingRange.java
+@@ -22,6 +22,7 @@ public class TrackingRange
+     public static int getEntityTrackingRange(Entity entity, int defaultRange)
+     {
+         if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EntityEnderDragon) return defaultRange; // Paper - enderdragon is exempt
++        if (entity instanceof net.minecraft.world.entity.monster.EntityGiantZombie) return 96; // Monumenta - Giants are visible from further away
+         SpigotWorldConfig config = entity.world.spigotConfig;
+         if ( entity instanceof EntityPlayer )
+         {

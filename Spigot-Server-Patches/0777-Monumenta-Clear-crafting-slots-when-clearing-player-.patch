@@ -1,0 +1,70 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hazerdous <dransom96@gmail.com>
+Date: Wed, 12 Jun 2019 01:24:34 -0400
+Subject: [PATCH] Monumenta - Clear crafting slots when clearing player
+ inventory
+
+
+diff --git a/src/main/java/net/minecraft/world/entity/player/PlayerInventory.java b/src/main/java/net/minecraft/world/entity/player/PlayerInventory.java
+index 2df3ae0b72ccb5f816d55fed15396ba5a1affb7f..73dbf78fd36fd29847d7eaa51f3b0b3487a6aac1 100644
+--- a/src/main/java/net/minecraft/world/entity/player/PlayerInventory.java
++++ b/src/main/java/net/minecraft/world/entity/player/PlayerInventory.java
+@@ -205,6 +205,32 @@ public class PlayerInventory implements IInventory, INamableTileEntity {
+             this.carried = ItemStack.b;
+         }
+ 
++        net.minecraft.world.inventory.InventoryCrafting craftInventory =
++            this.player.activeContainer instanceof net.minecraft.world.inventory.ContainerPlayer ? ((net.minecraft.world.inventory.ContainerPlayer) this.player.activeContainer).craftInventory :
++            this.player.activeContainer instanceof net.minecraft.world.inventory.ContainerWorkbench ? ((net.minecraft.world.inventory.ContainerWorkbench) this.player.activeContainer).craftInventory : null;
++        if (craftInventory != null) {
++            for (int k = 0; k < craftInventory.getSize(); ++k) {
++                ItemStack itemstack = craftInventory.getItem(k);
++
++                if (!itemstack.isEmpty() && predicate.test(itemstack)) {
++                    int l = i <= 0 ? itemstack.getCount() : Math.min(i - j, itemstack.getCount());
++
++                    j += l;
++                    if (i != 0) {
++                        itemstack.subtract(l);
++                        if (itemstack.isEmpty()) {
++                            craftInventory.setItem(k, ItemStack.NULL_ITEM);
++                        }
++
++                        if (i > 0 && j >= i) {
++                            return j;
++                        }
++                    }
++                }
++            }
++        }
++
++
+         return j;
+     }
+ 
+diff --git a/src/main/java/net/minecraft/world/inventory/ContainerPlayer.java b/src/main/java/net/minecraft/world/inventory/ContainerPlayer.java
+index 0e4b8af3006fdb27bbca1a6fac38add63f23c0aa..3779d719cd88155daff77f2ddd3907e35766074b 100644
+--- a/src/main/java/net/minecraft/world/inventory/ContainerPlayer.java
++++ b/src/main/java/net/minecraft/world/inventory/ContainerPlayer.java
+@@ -28,7 +28,7 @@ public class ContainerPlayer extends ContainerRecipeBook<InventoryCrafting> {
+     private static final MinecraftKey[] j = new MinecraftKey[]{ContainerPlayer.g, ContainerPlayer.f, ContainerPlayer.e, ContainerPlayer.d};
+     private static final EnumItemSlot[] k = new EnumItemSlot[]{EnumItemSlot.HEAD, EnumItemSlot.CHEST, EnumItemSlot.LEGS, EnumItemSlot.FEET};
+     // CraftBukkit start
+-    private final InventoryCrafting craftInventory;
++    public final InventoryCrafting craftInventory;
+     private final InventoryCraftResult resultInventory;
+     // CraftBukkit end
+     public final boolean i;
+diff --git a/src/main/java/net/minecraft/world/inventory/ContainerWorkbench.java b/src/main/java/net/minecraft/world/inventory/ContainerWorkbench.java
+index 554bcd9ffc4beb564a0bb6506b503b72da3e3771..130dae5338c8ce09783809e938009312aa4cfa2e 100644
+--- a/src/main/java/net/minecraft/world/inventory/ContainerWorkbench.java
++++ b/src/main/java/net/minecraft/world/inventory/ContainerWorkbench.java
+@@ -21,7 +21,7 @@ import org.bukkit.craftbukkit.inventory.CraftInventoryView;
+ 
+ public class ContainerWorkbench extends ContainerRecipeBook<InventoryCrafting> {
+ 
+-    private final InventoryCrafting craftInventory;
++    public final InventoryCrafting craftInventory;
+     private final InventoryCraftResult resultInventory;
+     public final ContainerAccess containerAccess;
+     private final EntityHuman f;

@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Njol <njol@gmx.ch>
+Date: Fri, 14 Jan 2022 22:58:36 +0100
+Subject: [PATCH] Monumenta - Improved score lookup performance
+
+
+diff --git a/src/main/java/net/minecraft/world/scores/Scoreboard.java b/src/main/java/net/minecraft/world/scores/Scoreboard.java
+index 8e6415211fe98be4d1455401bf9158ec6a04265e..da02dc2f8b51395473ff9c1bd56f50729354c241 100644
+--- a/src/main/java/net/minecraft/world/scores/Scoreboard.java
++++ b/src/main/java/net/minecraft/world/scores/Scoreboard.java
+@@ -56,7 +56,7 @@ public class Scoreboard {
+     }
+ 
+     public final void getObjectivesForCriteria(IScoreboardCriteria iscoreboardcriteria, String s, Consumer<ScoreboardScore> consumer) {
+-        ((List) this.objectivesByCriteria.getOrDefault(iscoreboardcriteria, Collections.emptyList())).forEach((scoreboardobjective) -> {
++        this.objectivesByCriteria.getOrDefault(iscoreboardcriteria, Collections.emptyList()).forEach((scoreboardobjective) -> {
+             consumer.accept(this.getPlayerScoreForObjective(s, scoreboardobjective));
+         });
+     }
+@@ -119,6 +119,10 @@ public class Scoreboard {
+         return Lists.newArrayList(this.playerScores.keySet());
+     }
+ 
++    public boolean hasPlayer(String player) {
++        return this.playerScores.containsKey(player);
++    }
++
+     public void resetPlayerScores(String s, @Nullable ScoreboardObjective scoreboardobjective) {
+         Map map;
+ 
+diff --git a/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScore.java b/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScore.java
+index af86f6d541930d059615730a9ba6863bfeae801d..c1605a78b43bd17688015cb6d5279aec4a83105a 100644
+--- a/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScore.java
++++ b/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScore.java
+@@ -43,7 +43,7 @@ final class CraftScore implements Score {
+     public int getScore() throws IllegalStateException {
+         Scoreboard board = objective.checkState().board;
+ 
+-        if (board.getPlayers().contains(entry)) { // Lazy
++        if (board.hasPlayer(entry)) { // Lazy
+             Map<ScoreboardObjective, ScoreboardScore> scores = board.getPlayerObjectives(entry);
+             ScoreboardScore score = scores.get(objective.getHandle());
+             if (score != null) { // Lazy
+@@ -63,7 +63,7 @@ final class CraftScore implements Score {
+     public boolean isScoreSet() throws IllegalStateException {
+         Scoreboard board = objective.checkState().board;
+ 
+-        return board.getPlayers().contains(entry) && board.getPlayerObjectives(entry).containsKey(objective.getHandle());
++        return board.hasPlayer(entry) && board.getPlayerObjectives(entry).containsKey(objective.getHandle());
+     }
+ 
+     @Override
