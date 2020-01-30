@@ -1,0 +1,123 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Thu, 26 Oct 2017 22:09:28 -0700
+Subject: [PATCH] Monumenta - Block behavior changes
+
+- Prevent ice from breaking/melting into water
+- Prevent concrete powder from solidifying
+- Coral is always waterlogged
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/world/level/block/BlockConcretePowder.java b/src/main/java/net/minecraft/world/level/block/BlockConcretePowder.java
+index bb8f10c25499eb1f8e9531f7ad30e666561f492f..c0998ba776a3c8f50d136b52e44e6a1c6a33d191 100644
+--- a/src/main/java/net/minecraft/world/level/block/BlockConcretePowder.java
++++ b/src/main/java/net/minecraft/world/level/block/BlockConcretePowder.java
+@@ -62,7 +62,7 @@ public class BlockConcretePowder extends BlockFalling {
+     }
+ 
+     private static boolean canHarden(IBlockAccess iblockaccess, BlockPosition blockposition, IBlockData iblockdata) {
+-        return l(iblockdata) || a(iblockaccess, blockposition);
++        return false;
+     }
+ 
+     private static boolean a(IBlockAccess iblockaccess, BlockPosition blockposition) {
+@@ -89,7 +89,7 @@ public class BlockConcretePowder extends BlockFalling {
+     }
+ 
+     private static boolean l(IBlockData iblockdata) {
+-        return iblockdata.getFluid().a((Tag) TagsFluid.WATER);
++        return false;
+     }
+ 
+     @Override
+diff --git a/src/main/java/net/minecraft/world/level/block/BlockCoral.java b/src/main/java/net/minecraft/world/level/block/BlockCoral.java
+index e3b744ceaa6cb4b51a866f0022714e2916410856..ba2fdb0dd4da2a5a2851d53e16773b7fd5cba58a 100644
+--- a/src/main/java/net/minecraft/world/level/block/BlockCoral.java
++++ b/src/main/java/net/minecraft/world/level/block/BlockCoral.java
+@@ -46,19 +46,7 @@ public class BlockCoral extends Block {
+     }
+ 
+     protected boolean a(IBlockAccess iblockaccess, BlockPosition blockposition) {
+-        EnumDirection[] aenumdirection = EnumDirection.values();
+-        int i = aenumdirection.length;
+-
+-        for (int j = 0; j < i; ++j) {
+-            EnumDirection enumdirection = aenumdirection[j];
+-            Fluid fluid = iblockaccess.getFluid(blockposition.shift(enumdirection));
+-
+-            if (fluid.a((Tag) TagsFluid.WATER)) {
+-                return true;
+-            }
+-        }
+-
+-        return false;
++        return true;
+     }
+ 
+     @Nullable
+diff --git a/src/main/java/net/minecraft/world/level/block/BlockCoralBase.java b/src/main/java/net/minecraft/world/level/block/BlockCoralBase.java
+index a24561cb4df0eba1213338396745ec4d2dfd8c35..7cd4899b1e521f5ed3b23c27194ccf96979bd02a 100644
+--- a/src/main/java/net/minecraft/world/level/block/BlockCoralBase.java
++++ b/src/main/java/net/minecraft/world/level/block/BlockCoralBase.java
+@@ -40,18 +40,7 @@ public class BlockCoralBase extends Block implements IBlockWaterlogged {
+         if ((Boolean) iblockdata.get(BlockCoralBase.b)) {
+             return true;
+         } else {
+-            EnumDirection[] aenumdirection = EnumDirection.values();
+-            int i = aenumdirection.length;
+-
+-            for (int j = 0; j < i; ++j) {
+-                EnumDirection enumdirection = aenumdirection[j];
+-
+-                if (iblockaccess.getFluid(blockposition.shift(enumdirection)).a((Tag) TagsFluid.WATER)) {
+-                    return true;
+-                }
+-            }
+-
+-            return false;
++            return true;
+         }
+     }
+ 
+diff --git a/src/main/java/net/minecraft/world/level/block/BlockIce.java b/src/main/java/net/minecraft/world/level/block/BlockIce.java
+index 461c85b426aab30c34529897e55aa842b45d0555..86eb7202942cdac5666ab1e515213c21e1f78f5a 100644
+--- a/src/main/java/net/minecraft/world/level/block/BlockIce.java
++++ b/src/main/java/net/minecraft/world/level/block/BlockIce.java
+@@ -27,16 +27,7 @@ public class BlockIce extends BlockHalfTransparent {
+     public void a(World world, EntityHuman entityhuman, BlockPosition blockposition, IBlockData iblockdata, @Nullable TileEntity tileentity, ItemStack itemstack) {
+         super.a(world, entityhuman, blockposition, iblockdata, tileentity, itemstack);
+         if (EnchantmentManager.getEnchantmentLevel(Enchantments.SILK_TOUCH, itemstack) == 0) {
+-            if (world.getDimensionManager().isNether()) {
+-                world.a(blockposition, false);
+-                return;
+-            }
+-
+-            Material material = world.getType(blockposition.down()).getMaterial();
+-
+-            if (material.isSolid() || material.isLiquid()) {
+-                world.setTypeUpdate(blockposition, Blocks.WATER.getBlockData());
+-            }
++            world.a(blockposition, false);
+         }
+ 
+     }
+@@ -50,17 +41,7 @@ public class BlockIce extends BlockHalfTransparent {
+     }
+ 
+     protected void melt(IBlockData iblockdata, World world, BlockPosition blockposition) {
+-        // CraftBukkit start
+-        if (org.bukkit.craftbukkit.event.CraftEventFactory.callBlockFadeEvent(world, blockposition, world.getDimensionManager().isNether() ? Blocks.AIR.getBlockData() : Blocks.WATER.getBlockData()).isCancelled()) {
+-            return;
+-        }
+-        // CraftBukkit end
+-        if (world.getDimensionManager().isNether()) {
+-            world.a(blockposition, false);
+-        } else {
+-            world.setTypeUpdate(blockposition, Blocks.WATER.getBlockData());
+-            world.a(blockposition, Blocks.WATER, blockposition);
+-        }
++        return;
+     }
+ 
+     @Override
