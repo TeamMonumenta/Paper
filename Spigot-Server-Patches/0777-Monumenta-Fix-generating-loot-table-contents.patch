@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Tue, 9 Jun 2020 21:19:52 -0400
+Subject: [PATCH] Monumenta - Fix generating loot table contents
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftLootTable.java b/src/main/java/org/bukkit/craftbukkit/CraftLootTable.java
+index 14fa2a434cda1c9943eef31f17a122ecc9afc7ac..e047179912e6aeb65740159ba42a72a21bbfd634 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftLootTable.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftLootTable.java
+@@ -103,12 +103,10 @@ public class CraftLootTable implements org.bukkit.loot.LootTable {
+         // SPIGOT-5603 - Avoid IllegalArgumentException in LootTableInfo#build()
+         LootContextParameterSet.Builder nmsBuilder = new LootContextParameterSet.Builder();
+         for (LootContextParameter<?> param : getHandle().getLootContextParameterSet().getRequired()) {
+-            nmsBuilder.addRequired(param);
++            nmsBuilder.addOptional(param);
+         }
+         for (LootContextParameter<?> param : getHandle().getLootContextParameterSet().getOptional()) {
+-            if (!getHandle().getLootContextParameterSet().getRequired().contains(param)) {
+-                nmsBuilder.addOptional(param);
+-            }
++            nmsBuilder.addOptional(param);
+         }
+         nmsBuilder.addOptional(LootContextParameters.LOOTING_MOD);
+ 

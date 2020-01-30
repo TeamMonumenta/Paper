@@ -1,0 +1,211 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Mon, 12 Oct 2020 02:03:47 -0400
+Subject: [PATCH] Monumenta - Disable a bunch of villager AI
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/world/entity/ai/behavior/Behaviors.java b/src/main/java/net/minecraft/world/entity/ai/behavior/Behaviors.java
+index df12193e1a2e449193a3feab53fc684a2571ae3a..609d53877f4c28b23de1fa9dc24ff87f9683c8fb 100644
+--- a/src/main/java/net/minecraft/world/entity/ai/behavior/Behaviors.java
++++ b/src/main/java/net/minecraft/world/entity/ai/behavior/Behaviors.java
+@@ -18,55 +18,47 @@ import net.minecraft.world.entity.npc.VillagerProfession;
+ public class Behaviors {
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> a(VillagerProfession villagerprofession, float f) {
+-        return ImmutableList.of(Pair.of(0, new BehaviorSwim(0.8F)), Pair.of(0, new BehaviorInteractDoor()), Pair.of(0, new BehaviorLook(45, 90)), Pair.of(0, new BehaviorPanic()), Pair.of(0, new BehaviorWake()), Pair.of(0, new BehaviorBellAlert()), Pair.of(0, new BehaviorRaid()), Pair.of(0, new BehaviorPositionValidate(villagerprofession.b(), MemoryModuleType.JOB_SITE)), Pair.of(0, new BehaviorPositionValidate(villagerprofession.b(), MemoryModuleType.POTENTIAL_JOB_SITE)), Pair.of(1, new BehavorMove()), Pair.of(2, new BehaviorBetterJob(villagerprofession)), Pair.of(3, new BehaviorInteractPlayer(f)), new Pair[]{Pair.of(5, new BehaviorFindAdmirableItem<>(f, false, 4)), Pair.of(6, new BehaviorFindPosition(villagerprofession.b(), MemoryModuleType.JOB_SITE, MemoryModuleType.POTENTIAL_JOB_SITE, true, Optional.empty())), Pair.of(7, new BehaviorPotentialJobSite(f)), Pair.of(8, new BehaviorLeaveJob(f)), Pair.of(10, new BehaviorFindPosition(VillagePlaceType.r, MemoryModuleType.HOME, false, Optional.of((byte) 14))), Pair.of(10, new BehaviorFindPosition(VillagePlaceType.s, MemoryModuleType.MEETING_POINT, true, Optional.of((byte) 14))), Pair.of(10, new BehaviorCareer()), Pair.of(10, new BehaviorProfession())});
++        return ImmutableList.of(Pair.of(0, new BehaviorSwim(0.8F)), Pair.of(0, new BehaviorLook(45, 90)), Pair.of(3, new BehaviorInteractPlayer(f)));
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> b(VillagerProfession villagerprofession, float f) {
+-        Object object;
+-
+-        if (villagerprofession == VillagerProfession.FARMER) {
+-            object = new BehaviorWorkComposter();
+-        } else {
+-            object = new BehaviorWork();
+-        }
+-
+-        return ImmutableList.of(b(), Pair.of(5, new BehaviorGateSingle<>(ImmutableList.of(Pair.of(object, 7), Pair.of(new BehaviorStrollPosition(MemoryModuleType.JOB_SITE, 0.4F, 4), 2), Pair.of(new BehaviorStrollPlace(MemoryModuleType.JOB_SITE, 0.4F, 1, 10), 5), Pair.of(new BehaviorStrollPlaceList(MemoryModuleType.SECONDARY_JOB_SITE, f, 1, 6, MemoryModuleType.JOB_SITE), 5), Pair.of(new BehaviorFarm(), villagerprofession == VillagerProfession.FARMER ? 2 : 5), Pair.of(new BehaviorBonemeal(), villagerprofession == VillagerProfession.FARMER ? 4 : 7)))), Pair.of(10, new BehaviorTradePlayer(400, 1600)), Pair.of(10, new BehaviorLookInteract(EntityTypes.PLAYER, 4)), Pair.of(2, new BehaviorWalkAwayBlock(MemoryModuleType.JOB_SITE, f, 9, 100, 1200)), Pair.of(3, new BehaviorVillageHeroGift(100)), Pair.of(99, new BehaviorSchedule()));
++        return ImmutableList.of(b(), Pair.of(10, new BehaviorTradePlayer(400, 1600)), Pair.of(10, new BehaviorLookInteract(EntityTypes.PLAYER, 4)), Pair.of(99, new BehaviorSchedule()));
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> a(float f) {
+-        return ImmutableList.of(Pair.of(0, new BehavorMove(80, 120)), a(), Pair.of(5, new BehaviorPlay()), Pair.of(5, new BehaviorGateSingle<>(ImmutableMap.of(MemoryModuleType.VISIBLE_VILLAGER_BABIES, MemoryStatus.VALUE_ABSENT), ImmutableList.of(Pair.of(BehaviorInteract.a(EntityTypes.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, f, 2), 2), Pair.of(BehaviorInteract.a(EntityTypes.CAT, 8, MemoryModuleType.INTERACTION_TARGET, f, 2), 1), Pair.of(new BehaviorStrollRandom(f), 1), Pair.of(new BehaviorLookWalk(f, 2), 1), Pair.of(new BehaviorBedJump(f), 2), Pair.of(new BehaviorNop(20, 40), 2)))), Pair.of(99, new BehaviorSchedule()));
++        return ImmutableList.of(a(), Pair.of(99, new BehaviorSchedule()));
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> c(VillagerProfession villagerprofession, float f) {
+-        return ImmutableList.of(Pair.of(2, new BehaviorWalkAwayBlock(MemoryModuleType.HOME, f, 1, 150, 1200)), Pair.of(3, new BehaviorPositionValidate(VillagePlaceType.r, MemoryModuleType.HOME)), Pair.of(3, new BehaviorSleep()), Pair.of(5, new BehaviorGateSingle<>(ImmutableMap.of(MemoryModuleType.HOME, MemoryStatus.VALUE_ABSENT), ImmutableList.of(Pair.of(new BehaviorWalkHome(f), 1), Pair.of(new BehaviorStrollInside(f), 4), Pair.of(new BehaviorNearestVillage(f, 4), 2), Pair.of(new BehaviorNop(20, 40), 2)))), b(), Pair.of(99, new BehaviorSchedule()));
++        return ImmutableList.of(b(), Pair.of(99, new BehaviorSchedule()));
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> d(VillagerProfession villagerprofession, float f) {
+-        return ImmutableList.of(Pair.of(2, new BehaviorGateSingle<>(ImmutableList.of(Pair.of(new BehaviorStrollPosition(MemoryModuleType.MEETING_POINT, 0.4F, 40), 2), Pair.of(new BehaviorBell(), 2)))), Pair.of(10, new BehaviorTradePlayer(400, 1600)), Pair.of(10, new BehaviorLookInteract(EntityTypes.PLAYER, 4)), Pair.of(2, new BehaviorWalkAwayBlock(MemoryModuleType.MEETING_POINT, f, 6, 100, 200)), Pair.of(3, new BehaviorVillageHeroGift(100)), Pair.of(3, new BehaviorPositionValidate(VillagePlaceType.s, MemoryModuleType.MEETING_POINT)), Pair.of(3, new BehaviorGate<>(ImmutableMap.of(), ImmutableSet.of(MemoryModuleType.INTERACTION_TARGET), BehaviorGate.Order.ORDERED, BehaviorGate.Execution.RUN_ONE, ImmutableList.of(Pair.of(new BehaviorTradeVillager(), 1)))), a(), Pair.of(99, new BehaviorSchedule()));
++        return ImmutableList.of(Pair.of(10, new BehaviorTradePlayer(400, 1600)), Pair.of(10, new BehaviorLookInteract(EntityTypes.PLAYER, 4)), a(), Pair.of(99, new BehaviorSchedule()));
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> e(VillagerProfession villagerprofession, float f) {
+-        return ImmutableList.of(Pair.of(2, new BehaviorGateSingle<>(ImmutableList.of(Pair.of(BehaviorInteract.a(EntityTypes.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, f, 2), 2), Pair.of(new BehaviorInteract<>(EntityTypes.VILLAGER, 8, EntityAgeable::canBreed, EntityAgeable::canBreed, MemoryModuleType.BREED_TARGET, f, 2), 1), Pair.of(BehaviorInteract.a(EntityTypes.CAT, 8, MemoryModuleType.INTERACTION_TARGET, f, 2), 1), Pair.of(new BehaviorStrollRandom(f), 1), Pair.of(new BehaviorLookWalk(f, 2), 1), Pair.of(new BehaviorBedJump(f), 1), Pair.of(new BehaviorNop(30, 60), 1)))), Pair.of(3, new BehaviorVillageHeroGift(100)), Pair.of(3, new BehaviorLookInteract(EntityTypes.PLAYER, 4)), Pair.of(3, new BehaviorTradePlayer(400, 1600)), Pair.of(3, new BehaviorGate<>(ImmutableMap.of(), ImmutableSet.of(MemoryModuleType.INTERACTION_TARGET), BehaviorGate.Order.ORDERED, BehaviorGate.Execution.RUN_ONE, ImmutableList.of(Pair.of(new BehaviorTradeVillager(), 1)))), Pair.of(3, new BehaviorGate<>(ImmutableMap.of(), ImmutableSet.of(MemoryModuleType.BREED_TARGET), BehaviorGate.Order.ORDERED, BehaviorGate.Execution.RUN_ONE, ImmutableList.of(Pair.of(new BehaviorMakeLove(), 1)))), a(), Pair.of(99, new BehaviorSchedule()));
++        return ImmutableList.of(Pair.of(2, new BehaviorGateSingle<>(ImmutableList.of(Pair.of(BehaviorInteract.a(EntityTypes.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, f, 2), 2), Pair.of(BehaviorInteract.a(EntityTypes.CAT, 8, MemoryModuleType.INTERACTION_TARGET, f, 2), 1),Pair.of(new BehaviorNop(30, 60), 1)))), Pair.of(3, new BehaviorLookInteract(EntityTypes.PLAYER, 4)), Pair.of(3, new BehaviorTradePlayer(400, 1600)), a(), Pair.of(99, new BehaviorSchedule()));
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> f(VillagerProfession villagerprofession, float f) {
+         float f1 = f * 1.5F;
+ 
+-        return ImmutableList.of(Pair.of(0, new BehaviorCooldown()), Pair.of(1, BehaviorWalkAway.b(MemoryModuleType.NEAREST_HOSTILE, f1, 6, false)), Pair.of(1, BehaviorWalkAway.b(MemoryModuleType.HURT_BY_ENTITY, f1, 6, false)), Pair.of(3, new BehaviorStrollRandom(f1, 2, 2)), b());
++        return ImmutableList.of(b());
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> g(VillagerProfession villagerprofession, float f) {
+-        return ImmutableList.of(Pair.of(0, new BehaviorBellRing()), Pair.of(0, new BehaviorGateSingle<>(ImmutableList.of(Pair.of(new BehaviorWalkAwayBlock(MemoryModuleType.MEETING_POINT, f * 1.5F, 2, 150, 200), 6), Pair.of(new BehaviorStrollRandom(f * 1.5F), 2)))), b(), Pair.of(99, new BehaviorRaidReset()));
++        return ImmutableList.of(b());
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> h(VillagerProfession villagerprofession, float f) {
+-        return ImmutableList.of(Pair.of(0, new BehaviorGateSingle<>(ImmutableList.of(Pair.of(new BehaviorOutsideCelebrate(f), 5), Pair.of(new BehaviorVictory(f * 1.1F), 2)))), Pair.of(0, new BehaviorCelebrate(600, 600)), Pair.of(2, new BehaviorHomeRaid(24, f * 1.4F)), b(), Pair.of(99, new BehaviorRaidReset()));
++        return ImmutableList.of(b());
+     }
+ 
+     public static ImmutableList<Pair<Integer, ? extends Behavior<? super EntityVillager>>> i(VillagerProfession villagerprofession, float f) {
+         boolean flag = true;
+ 
+-        return ImmutableList.of(Pair.of(0, new BehaviorHide(15, 3)), Pair.of(1, new BehaviorHome(32, f * 1.25F, 2)), b());
++        return ImmutableList.of(b());
+     }
+ 
+     private static Pair<Integer, Behavior<EntityLiving>> a() {
+diff --git a/src/main/java/net/minecraft/world/entity/npc/EntityVillager.java b/src/main/java/net/minecraft/world/entity/npc/EntityVillager.java
+index 85374ac8f5460790de03b47d7c3ce19ed5596afe..624e857e9c066a26a2517f0928258cea927eb058 100644
+--- a/src/main/java/net/minecraft/world/entity/npc/EntityVillager.java
++++ b/src/main/java/net/minecraft/world/entity/npc/EntityVillager.java
+@@ -179,13 +179,7 @@ public class EntityVillager extends EntityVillagerAbstract implements Reputation
+         }
+ 
+         behaviorcontroller.a(Activity.CORE, Behaviors.a(villagerprofession, 0.5F));
+-        behaviorcontroller.a(Activity.MEET, Behaviors.d(villagerprofession, 0.5F), (Set) ImmutableSet.of(Pair.of(MemoryModuleType.MEETING_POINT, MemoryStatus.VALUE_PRESENT)));
+-        behaviorcontroller.a(Activity.REST, Behaviors.c(villagerprofession, 0.5F));
+         behaviorcontroller.a(Activity.IDLE, Behaviors.e(villagerprofession, 0.5F));
+-        behaviorcontroller.a(Activity.PANIC, Behaviors.f(villagerprofession, 0.5F));
+-        behaviorcontroller.a(Activity.PRE_RAID, Behaviors.g(villagerprofession, 0.5F));
+-        behaviorcontroller.a(Activity.RAID, Behaviors.h(villagerprofession, 0.5F));
+-        behaviorcontroller.a(Activity.HIDE, Behaviors.i(villagerprofession, 0.5F));
+         behaviorcontroller.a((Set) ImmutableSet.of(Activity.CORE));
+         behaviorcontroller.b(Activity.IDLE);
+         behaviorcontroller.a(Activity.IDLE);
+@@ -647,26 +641,9 @@ public class EntityVillager extends EntityVillagerAbstract implements Reputation
+     }
+ 
+     private void fq() {
+-        this.a(MemoryModuleType.HOME);
+-        this.a(MemoryModuleType.JOB_SITE);
+-        this.a(MemoryModuleType.POTENTIAL_JOB_SITE);
+-        this.a(MemoryModuleType.MEETING_POINT);
+     }
+ 
+     private void a(Entity entity) {
+-        if (this.world instanceof WorldServer) {
+-            Optional<List<EntityLiving>> optional = this.bg.getMemory(MemoryModuleType.VISIBLE_MOBS);
+-
+-            if (optional.isPresent()) {
+-                WorldServer worldserver = (WorldServer) this.world;
+-
+-                ((List) optional.get()).stream().filter((entityliving) -> {
+-                    return entityliving instanceof ReputationHandler;
+-                }).forEach((entityliving) -> {
+-                    worldserver.a(ReputationEvent.d, entity, (ReputationHandler) entityliving);
+-                });
+-            }
+-        }
+     }
+ 
+     public void a(MemoryModuleType<GlobalPos> memorymoduletype) {
+@@ -897,18 +874,6 @@ public class EntityVillager extends EntityVillagerAbstract implements Reputation
+ 
+     @Override
+     protected void eW() {
+-        VillagerData villagerdata = this.getVillagerData();
+-        Int2ObjectMap<VillagerTrades.IMerchantRecipeOption[]> int2objectmap = (Int2ObjectMap) VillagerTrades.a.get(villagerdata.getProfession());
+-
+-        if (int2objectmap != null && !int2objectmap.isEmpty()) {
+-            VillagerTrades.IMerchantRecipeOption[] avillagertrades_imerchantrecipeoption = (VillagerTrades.IMerchantRecipeOption[]) int2objectmap.get(villagerdata.getLevel());
+-
+-            if (avillagertrades_imerchantrecipeoption != null) {
+-                MerchantRecipeList merchantrecipelist = this.getOffers();
+-
+-                this.a(merchantrecipelist, avillagertrades_imerchantrecipeoption, 2);
+-            }
+-        }
+     }
+ 
+     public void a(WorldServer worldserver, EntityVillager entityvillager, long i) {
+@@ -951,7 +916,7 @@ public class EntityVillager extends EntityVillagerAbstract implements Reputation
+     }
+ 
+     public boolean a(long i) {
+-        return !this.b(this.world.getTime()) ? false : !this.bg.hasMemory(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
++        return true;
+     }
+ 
+     @Nullable
+@@ -1068,23 +1033,7 @@ public class EntityVillager extends EntityVillagerAbstract implements Reputation
+         PacketDebug.a((EntityLiving) this);
+     }
+ 
+-    @Override
+-    public void entitySleep(BlockPosition blockposition) {
+-        super.entitySleep(blockposition);
+-        this.bg.setMemory(MemoryModuleType.LAST_SLEPT, this.world.getTime()); // CraftBukkit - decompile error
+-        this.bg.removeMemory(MemoryModuleType.WALK_TARGET);
+-        this.bg.removeMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+-    }
+-
+-    @Override
+-    public void entityWakeup() {
+-        super.entityWakeup();
+-        this.bg.setMemory(MemoryModuleType.LAST_WOKEN, this.world.getTime()); // CraftBukkit - decompile error
+-    }
+-
+     private boolean b(long i) {
+-        Optional<Long> optional = this.bg.getMemory(MemoryModuleType.LAST_SLEPT);
+-
+-        return optional.isPresent() ? i - (Long) optional.get() < 24000L : false;
++        return false;
+     }
+ }
+diff --git a/src/main/java/net/minecraft/world/entity/npc/EntityVillagerTrader.java b/src/main/java/net/minecraft/world/entity/npc/EntityVillagerTrader.java
+index 69044827ed6b34924ffd89a977afa06df0dcefc3..b93b719dcebee7912c7abb20c0906ad31a5077d8 100644
+--- a/src/main/java/net/minecraft/world/entity/npc/EntityVillagerTrader.java
++++ b/src/main/java/net/minecraft/world/entity/npc/EntityVillagerTrader.java
+@@ -132,31 +132,6 @@ public class EntityVillagerTrader extends EntityVillagerAbstract {
+ 
+     @Override
+     protected void eW() {
+-        VillagerTrades.IMerchantRecipeOption[] avillagertrades_imerchantrecipeoption = (VillagerTrades.IMerchantRecipeOption[]) VillagerTrades.b.get(1);
+-        VillagerTrades.IMerchantRecipeOption[] avillagertrades_imerchantrecipeoption1 = (VillagerTrades.IMerchantRecipeOption[]) VillagerTrades.b.get(2);
+-
+-        if (avillagertrades_imerchantrecipeoption != null && avillagertrades_imerchantrecipeoption1 != null) {
+-            MerchantRecipeList merchantrecipelist = this.getOffers();
+-
+-            this.a(merchantrecipelist, avillagertrades_imerchantrecipeoption, 5);
+-            int i = this.random.nextInt(avillagertrades_imerchantrecipeoption1.length);
+-            VillagerTrades.IMerchantRecipeOption villagertrades_imerchantrecipeoption = avillagertrades_imerchantrecipeoption1[i];
+-            MerchantRecipe merchantrecipe = villagertrades_imerchantrecipeoption.a(this, this.random);
+-
+-            if (merchantrecipe != null) {
+-                // CraftBukkit start
+-                VillagerAcquireTradeEvent event = new VillagerAcquireTradeEvent((AbstractVillager) getBukkitEntity(), merchantrecipe.asBukkit());
+-                // Suppress during worldgen
+-                if (this.valid) {
+-                    Bukkit.getPluginManager().callEvent(event);
+-                }
+-                if (!event.isCancelled()) {
+-                    merchantrecipelist.add(CraftMerchantRecipe.fromBukkit(event.getRecipe()).toMinecraft());
+-                }
+-                // CraftBukkit end
+-            }
+-
+-        }
+     }
+ 
+     @Override

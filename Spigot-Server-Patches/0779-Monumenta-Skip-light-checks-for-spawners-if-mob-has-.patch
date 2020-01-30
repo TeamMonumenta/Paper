@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Mon, 28 Sep 2020 05:09:28 +0000
+Subject: [PATCH] Monumenta - Skip light checks for spawners if mob has
+ ignore_light tag
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/world/level/MobSpawnerAbstract.java b/src/main/java/net/minecraft/world/level/MobSpawnerAbstract.java
+index 9fbb554e9d281f76acad6af075f3f0aa1b0f432b..47ecd54ed46181febef419c87a904c1fff04720e 100644
+--- a/src/main/java/net/minecraft/world/level/MobSpawnerAbstract.java
++++ b/src/main/java/net/minecraft/world/level/MobSpawnerAbstract.java
+@@ -43,6 +43,8 @@ public abstract class MobSpawnerAbstract {
+     public int requiredPlayerRange = 16;
+     public int spawnRange = 4;
+     private int tickDelay = 0; // Paper
++    private boolean isIgnoreLight = false; // Monumenta - start at false, need to check mob to see if true
++    private boolean ignoreLightChecked = false; // Monumenta - haven't checked yet to see if tag ignore_light exists
+ 
+     public MobSpawnerAbstract() {}
+ 
+@@ -108,6 +110,22 @@ public abstract class MobSpawnerAbstract {
+ 
+                 boolean flag = false;
+ 
++                // Monumenta START
++                // Need to check if the mob has the ignore_light tag
++                if (!ignoreLightChecked) {
++                    NBTTagList tags = this.spawnData.getEntity().getList("Tags", 8);
++                    for (int i = 0; i < tags.size(); ++i) {
++                        if (tags.getString(i).equals("ignore_light")) {
++                            isIgnoreLight = true;
++                            break;
++                        }
++                    }
++
++                    // Don't check again
++                    ignoreLightChecked = true;
++                }
++                // Monumenta END
++
+                 for (int i = 0; i < this.spawnCount; ++i) {
+                     NBTTagCompound nbttagcompound = this.spawnData.getEntity();
+                     Optional<EntityTypes<?>> optional = EntityTypes.a(nbttagcompound);
+@@ -126,7 +144,8 @@ public abstract class MobSpawnerAbstract {
+                     if (world.b(((EntityTypes) optional.get()).a(d3, d4, d5))) {
+                         WorldServer worldserver = (WorldServer) world;
+ 
+-                        if (EntityPositionTypes.a((EntityTypes) optional.get(), worldserver, EnumMobSpawn.SPAWNER, new BlockPosition(d3, d4, d5), world.getRandom())) {
++                        // Monumenta: if isIgnoreLight, use pigman check (which is just checking if it's not peaceful)
++                        if (EntityPositionTypes.a((isIgnoreLight ? EntityTypes.ZOMBIFIED_PIGLIN : (EntityTypes) optional.get()), worldserver, EnumMobSpawn.SPAWNER, new BlockPosition(d3, d4, d5), world.getRandom())) { // Monumenta
+                             // Paper start
+                             EntityTypes<?> entityType = optional.get();
+                             String key = EntityTypes.getName(entityType).getKey();
+@@ -170,7 +189,9 @@ public abstract class MobSpawnerAbstract {
+                             if (entity instanceof EntityInsentient) {
+                                 EntityInsentient entityinsentient = (EntityInsentient) entity;
+ 
+-                                if (!entityinsentient.a((GeneratorAccess) world, EnumMobSpawn.SPAWNER) || !entityinsentient.a((IWorldReader) world)) {
++                                // Monumenta - first check is mostly a light level check - skip it if isIgnoreLight
++                                // Monumenta - second check for just IWorldReader checks for collisions with blocks / correct fluid type (leave alone)
++                                if ((!isIgnoreLight && !entityinsentient.a((GeneratorAccess) world, EnumMobSpawn.SPAWNER)) || !entityinsentient.a((IWorldReader) world)) { // Monumenta
+                                     continue;
+                                 }
+ 

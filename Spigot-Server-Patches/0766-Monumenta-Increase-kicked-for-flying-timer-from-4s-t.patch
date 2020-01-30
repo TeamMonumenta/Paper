@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Thu, 28 Feb 2019 23:37:12 -0500
+Subject: [PATCH] Monumenta - Increase kicked-for-flying timer from 4s to 6s
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/server/network/PlayerConnection.java b/src/main/java/net/minecraft/server/network/PlayerConnection.java
+index 4001078e2a408dfd5a93c21f55a58c1fde32abbb..ed3e17effea57a38dd22dc1060843a2bf2fa89bb 100644
+--- a/src/main/java/net/minecraft/server/network/PlayerConnection.java
++++ b/src/main/java/net/minecraft/server/network/PlayerConnection.java
+@@ -327,7 +327,7 @@ public class PlayerConnection implements PacketListenerPlayIn {
+         ++this.e;
+         this.processedMovePackets = this.receivedMovePackets;
+         if (this.B && !this.player.isSleeping()) {
+-            if (++this.C > 80) {
++            if (++this.C > 120) {
+                 PlayerConnection.LOGGER.warn("{} was kicked for floating too long!", this.player.getDisplayName().getString());
+                 this.disconnect(com.destroystokyo.paper.PaperConfig.flyingKickPlayerMessage, org.bukkit.event.player.PlayerKickEvent.Cause.FLYING_PLAYER); // Paper - use configurable kick message & kick event cause
+                 return;
+@@ -346,7 +346,7 @@ public class PlayerConnection implements PacketListenerPlayIn {
+             this.w = this.r.locY();
+             this.x = this.r.locZ();
+             if (this.D && this.player.getRootVehicle().getRidingPassenger() == this.player) {
+-                if (++this.E > 80) {
++                if (++this.E > 120) {
+                     PlayerConnection.LOGGER.warn("{} was kicked for floating a vehicle too long!", this.player.getDisplayName().getString());
+                     this.disconnect(com.destroystokyo.paper.PaperConfig.flyingKickVehicleMessage, org.bukkit.event.player.PlayerKickEvent.Cause.FLYING_VEHICLE); // Paper - use configurable kick message & kick event cause
+                     return;

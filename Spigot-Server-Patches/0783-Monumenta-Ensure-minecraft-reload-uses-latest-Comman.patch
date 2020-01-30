@@ -1,0 +1,93 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Sat, 24 Oct 2020 14:57:50 -0400
+Subject: [PATCH] Monumenta - Ensure minecraft:reload uses latest
+ CommandDispatcher
+
+
+diff --git a/src/main/java/net/minecraft/server/CustomFunctionManager.java b/src/main/java/net/minecraft/server/CustomFunctionManager.java
+index 0ca1dfa2ae1147417ff5e6e4f2161b263cec13f9..4c8ce7856dfa990147ad4fd8848c5e3f7220466b 100644
+--- a/src/main/java/net/minecraft/server/CustomFunctionManager.java
++++ b/src/main/java/net/minecraft/server/CustomFunctionManager.java
+@@ -44,6 +44,7 @@ public class CustomFunctionManager implements IReloadListener {
+     private volatile Tags<CustomFunction> f = Tags.c();
+     private final int g;
+     private final CommandDispatcher<CommandListenerWrapper> h;
++    private static boolean initialFunctionLoad = true; // MONUMENTA
+ 
+     public Optional<CustomFunction> a(MinecraftKey minecraftkey) {
+         return Optional.ofNullable(this.d.get(minecraftkey));
+@@ -71,7 +72,14 @@ public class CustomFunctionManager implements IReloadListener {
+         CompletableFuture<Map<MinecraftKey, Tag.a>> completablefuture = this.e.a(iresourcemanager, executor);
+         CompletableFuture<Map<MinecraftKey, CompletableFuture<CustomFunction>>> completablefuture1 = CompletableFuture.supplyAsync(() -> {
+             return iresourcemanager.a("functions", (s) -> {
+-                return s.endsWith(".mcfunction");
++                // MONUMENTA START
++                // Don't load functions the first time the server starts up
++                if (initialFunctionLoad) {
++                    return false;
++                } else {
++                    return s.endsWith(".mcfunction");
++                }
++                // MONUMENTA END
+             });
+         }, executor).thenCompose((collection) -> {
+             Map<MinecraftKey, CompletableFuture<CustomFunction>> map = Maps.newHashMap();
+@@ -100,7 +108,7 @@ public class CustomFunctionManager implements IReloadListener {
+ 
+         ireloadlistener_a.getClass();
+         return completablefuture2.thenCompose(ireloadlistener_a::a).thenAcceptAsync((pair) -> {
+-            Map<MinecraftKey, CompletableFuture<CustomFunction>> map = (Map) pair.getSecond();
++            Map<MinecraftKey, CompletableFuture<CustomFunction>> map = (Map) ((Pair)pair).getSecond();
+             Builder<MinecraftKey, CustomFunction> builder = ImmutableMap.builder();
+ 
+             map.forEach((minecraftkey, completablefuture3) -> {
+@@ -115,7 +123,8 @@ public class CustomFunctionManager implements IReloadListener {
+                 }).join();
+             });
+             this.d = builder.build();
+-            this.f = this.e.a((Map) pair.getFirst());
++            this.f = this.e.a((Map) ((Pair)pair).getFirst());
++            initialFunctionLoad = false;
+         }, executor1);
+     }
+ 
+diff --git a/src/main/java/net/minecraft/server/DataPackResources.java b/src/main/java/net/minecraft/server/DataPackResources.java
+index 68265126871f54f7654f3ca5b472d86bf3254852..5ccabc2614b39712b80818293fde207b2fcd7e22 100644
+--- a/src/main/java/net/minecraft/server/DataPackResources.java
++++ b/src/main/java/net/minecraft/server/DataPackResources.java
+@@ -20,6 +20,7 @@ import net.minecraft.world.level.storage.loot.LootTableRegistry;
+ public class DataPackResources implements AutoCloseable {
+ 
+     private static final CompletableFuture<Unit> a = CompletableFuture.completedFuture(Unit.INSTANCE);
++    public static CommandDispatcher staticDispatcher = null; // MONUMENTA
+     private final IReloadableResourceManager b;
+     public CommandDispatcher commandDispatcher;
+     private final CraftingManager d;
+@@ -36,7 +37,13 @@ public class DataPackResources implements AutoCloseable {
+         this.f = new LootPredicateManager();
+         this.g = new LootTableRegistry(this.f);
+         this.h = new AdvancementDataWorld(this.f);
+-        this.commandDispatcher = new CommandDispatcher(commanddispatcher_servertype);
++        // MONUMENTA START
++        if (staticDispatcher == null) {
++            this.commandDispatcher = new CommandDispatcher(commanddispatcher_servertype);
++        } else {
++            this.commandDispatcher = staticDispatcher;
++        }
++        // MONUMENTA END
+         this.i = new CustomFunctionManager(i, this.commandDispatcher.a());
+         this.b.a((IReloadListener) this.e);
+         this.b.a((IReloadListener) this.f);
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index cebecee640ed5a7fc2b978e00ff7eb012228267d..06964bc22282e8c6e7dd4b1a4c47da48dac7c6c0 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -473,6 +473,7 @@ public final class CraftServer implements Server {
+     public void syncCommands() {
+         // Clear existing commands
+         CommandDispatcher dispatcher = console.dataPackResources.commandDispatcher = new CommandDispatcher();
++        console.dataPackResources.staticDispatcher = dispatcher;
+ 
+         // Register all commands, vanilla ones will be using the old dispatcher references
+         for (Map.Entry<String, Command> entry : commandMap.getKnownCommands().entrySet()) {
