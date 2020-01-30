@@ -1,0 +1,67 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hazerd <dransom96@gmail.com>
+Date: Sun, 10 May 2020 18:42:57 -0400
+Subject: [PATCH] Monumenta - Improve villager trade comparisons
+
+Match durability=0 with null durability
+Match on plain tag if it is available
+
+diff --git a/src/main/java/net/minecraft/world/item/trading/MerchantRecipe.java b/src/main/java/net/minecraft/world/item/trading/MerchantRecipe.java
+index 605d1b2514c272c0fcf3cb9d7575ad8066dad31b..cd6f4f03f48c1b760ee00e7b9e4739dbff7ebd2c 100644
+--- a/src/main/java/net/minecraft/world/item/trading/MerchantRecipe.java
++++ b/src/main/java/net/minecraft/world/item/trading/MerchantRecipe.java
+@@ -213,17 +213,52 @@ public class MerchantRecipe {
+         return this.c(itemstack, this.getBuyItem1()) && itemstack.getCount() >= this.getBuyItem1().getCount() && this.c(itemstack1, this.buyingItem2) && itemstack1.getCount() >= this.buyingItem2.getCount();
+     }
+ 
++    /* MONUMENTA START
++     * Pops display.Name if plain.display.Name exists
++     * Pops display.Lore if plain.display.Lore exists
++     * Modifies the input item!
++     */
++    private void popDisplayIfPlain(ItemStack itemstack) {
++        NBTTagCompound display = itemstack.getSubTag("display");
++        if (display != null) {
++            NBTTagCompound plain = itemstack.getSubTag("plain");
++            if (plain != null) {
++                if (plain.hasKeyOfType("Name", 8)) {
++                    display.remove("Name");
++                }
++                if (plain.hasKeyOfType("Lore", 9)) {
++                    display.remove("Lore");
++                }
++            }
++        }
++    }
++
+     private boolean c(ItemStack itemstack, ItemStack itemstack1) {
+         if (itemstack1.isEmpty() && itemstack.isEmpty()) {
+             return true;
+         } else {
++            /* MONUMENTA START
++             * Compare items by plain tag if present
++             * Ensure damage not present matches 0 damage
++             */
+             ItemStack itemstack2 = itemstack.cloneItemStack();
++            ItemStack itemstack3 = itemstack1.cloneItemStack();
+ 
+-            if (itemstack2.getItem().usesDurability()) {
++            if (itemstack2.getItem().usesDurability() && itemstack3.getItem().usesDurability()) {
+                 itemstack2.setDamage(itemstack2.getDamage());
++				itemstack3.setDamage(itemstack3.getDamage());
++            }
++
++            /* Don't compare the actual display.Name and display.Lore if the plain variants are available */
++            if (itemstack2.hasTag()) {
++                popDisplayIfPlain(itemstack2);
++            }
++            if (itemstack3.hasTag()) {
++                popDisplayIfPlain(itemstack3);
+             }
+ 
+-            return ItemStack.c(itemstack2, itemstack1) && (!itemstack1.hasTag() || itemstack2.hasTag() && GameProfileSerializer.a(itemstack1.getTag(), itemstack2.getTag(), false));
++            return ItemStack.c(itemstack2, itemstack3) && (!itemstack3.hasTag() || itemstack2.hasTag() && GameProfileSerializer.a(itemstack3.getTag(), itemstack2.getTag(), false));
++            /* MONUMENTA END */
+         }
+     }
+ 

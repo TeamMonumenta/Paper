@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Thu, 5 Oct 2017 21:45:16 -0700
+Subject: [PATCH] Monumenta - Removed test for monsters when sleeping in beds
+
+
+diff --git a/src/main/java/net/minecraft/server/level/EntityPlayer.java b/src/main/java/net/minecraft/server/level/EntityPlayer.java
+index 75bcfb3a2b4a104aeebb2fe3298714b2e5b569d2..843a99d962df3271d824800a6b409ce8b707e357 100644
+--- a/src/main/java/net/minecraft/server/level/EntityPlayer.java
++++ b/src/main/java/net/minecraft/server/level/EntityPlayer.java
+@@ -1250,18 +1250,6 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
+                 if (this.world.isDay()) {
+                     return Either.left(EntityHuman.EnumBedResult.NOT_POSSIBLE_NOW);
+                 } else {
+-                    if (!this.isCreative()) {
+-                        double d0 = 8.0D;
+-                        double d1 = 5.0D;
+-                        Vec3D vec3d = Vec3D.c((BaseBlockPosition) blockposition);
+-                        List<EntityMonster> list = this.world.a(EntityMonster.class, new AxisAlignedBB(vec3d.getX() - 8.0D, vec3d.getY() - 5.0D, vec3d.getZ() - 8.0D, vec3d.getX() + 8.0D, vec3d.getY() + 5.0D, vec3d.getZ() + 8.0D), (entitymonster) -> {
+-                            return entitymonster.f((EntityHuman) this);
+-                        });
+-
+-                        if (!list.isEmpty()) {
+-                            return Either.left(EntityHuman.EnumBedResult.NOT_SAFE);
+-                        }
+-                    }
+ 
+                     return Either.right(Unit.INSTANCE);
+                 }

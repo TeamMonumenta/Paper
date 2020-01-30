@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Mon, 5 Apr 2021 14:04:44 -0400
+Subject: [PATCH] Monumenta - Move spawnpoint set for sleeping in bed after
+ event
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/server/level/EntityPlayer.java b/src/main/java/net/minecraft/server/level/EntityPlayer.java
+index 74212dbb16b8bac67defb80cea87b3906319be3e..2db55bc4a666ab0565187533acfbd5f1c4d9d04d 100644
+--- a/src/main/java/net/minecraft/server/level/EntityPlayer.java
++++ b/src/main/java/net/minecraft/server/level/EntityPlayer.java
+@@ -1255,13 +1255,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
+             } else if (this.b(blockposition, enumdirection)) {
+                 return Either.left(EntityHuman.EnumBedResult.OBSTRUCTED);
+             } else {
+-                this.setRespawnPosition(this.world.getDimensionKey(), blockposition, this.yaw, false, true);
+-                if (this.world.isDay()) {
+-                    return Either.left(EntityHuman.EnumBedResult.NOT_POSSIBLE_NOW);
+-                } else {
+-
+-                    return Either.right(Unit.INSTANCE);
+-                }
++                return Either.right(Unit.INSTANCE);
+             }
+         } else {
+             return Either.left(EntityHuman.EnumBedResult.OTHER_PROBLEM);
+@@ -1286,6 +1280,8 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
+             return bedResult;
+         }
+ 
++        this.setRespawnPosition(this.world.getDimensionKey(), blockposition, this.yaw, false, true);
++
+         {
+             {
+                 {
