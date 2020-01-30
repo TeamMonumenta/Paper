@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Timothy Southwick <NickNackGus@gmail.com>
+Date: Sun, 30 May 2021 15:50:40 -0400
+Subject: [PATCH] Monumenta - Enforce NoAI on Shulkers
+
+
+diff --git a/src/main/java/net/minecraft/world/entity/monster/EntityShulker.java b/src/main/java/net/minecraft/world/entity/monster/EntityShulker.java
+index 49523302dd72a3dafab23c047412a2e77b6247ed..3aa860e2a1feb0395a3942ad5f2d92b942142148 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/EntityShulker.java
++++ b/src/main/java/net/minecraft/world/entity/monster/EntityShulker.java
+@@ -186,7 +186,7 @@ public class EntityShulker extends EntityGolem implements IMonster {
+             this.aA = f;
+             this.aB = f;
+             this.bu = 0;
+-        } else if (!this.world.isClientSide) {
++        } else if (!this.world.isClientSide && !this.isNoAI()) {
+             IBlockData iblockdata = this.world.getType(blockposition);
+             EnumDirection enumdirection;
+ 
