@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Sat, 9 May 2020 01:54:16 +0000
+Subject: [PATCH] Monumenta - Move player saving to before disabling plugins
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
+index 1d7c26354eee1dff5e66b6234d408ed8f800415c..c4e9edcedb51fa7d6ec9a896a9fc273cfe149fef 100644
+--- a/src/main/java/net/minecraft/server/MinecraftServer.java
++++ b/src/main/java/net/minecraft/server/MinecraftServer.java
+@@ -1040,6 +1040,13 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         // CraftBukkit end
+         MinecraftServer.LOGGER.info("Stopping server");
+         MinecraftTimings.stopServer(); // Paper
++
++        if (this.playerList != null) {
++            MinecraftServer.LOGGER.info("Saving players");
++            this.playerList.removeAll(this.isRestarting); // Paper
++            try { Thread.sleep(100); } catch (InterruptedException ex) {} // CraftBukkit - SPIGOT-625 - give server at least a chance to send packets
++        }
++
+         // CraftBukkit start
+         if (this.server != null) {
+             this.server.disablePlugins();
+@@ -1050,12 +1057,6 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             this.getConnection().stop();
+         }
+ 
+-        if (this.playerList != null) {
+-            MinecraftServer.LOGGER.info("Saving players");
+-            this.playerList.removeAll(this.isRestarting); // Paper
+-            try { Thread.sleep(100); } catch (InterruptedException ex) {} // CraftBukkit - SPIGOT-625 - give server at least a chance to send packets
+-        }
+-
+         MinecraftServer.LOGGER.info("Saving worlds");
+         Iterator iterator = this.getAllLevels().iterator();
+ 
