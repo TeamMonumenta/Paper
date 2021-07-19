@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Thu, 6 Feb 2020 01:34:38 -0500
+Subject: [PATCH] Monumenta - Refuse to start shard if scoreboard fails to load
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/world/level/storage/DimensionDataStorage.java b/src/main/java/net/minecraft/world/level/storage/DimensionDataStorage.java
+index c8ed0673ff819cb88d0ee6f53f2a2b9b46b203d4..b5c44915376062fdf4559670ed98fa9183392088 100644
+--- a/src/main/java/net/minecraft/world/level/storage/DimensionDataStorage.java
++++ b/src/main/java/net/minecraft/world/level/storage/DimensionDataStorage.java
+@@ -67,6 +67,7 @@ public class DimensionDataStorage {
+             }
+         } catch (Exception var5) {
+             LOGGER.error("Error loading saved data: {}", id, var5);
++            System.exit(-9001);
+         }
+ 
+         return (T)null;

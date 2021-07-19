@@ -1,0 +1,122 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Thu, 26 Oct 2017 22:09:28 -0700
+Subject: [PATCH] Monumenta - Block behavior changes
+
+- Prevent ice from breaking/melting into water
+- Prevent concrete powder from solidifying
+- Coral is always waterlogged
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/net/minecraft/world/level/block/BaseCoralPlantTypeBlock.java b/src/main/java/net/minecraft/world/level/block/BaseCoralPlantTypeBlock.java
+index c1dcd81fd4d56f829e9971feaa8bd81ed638f08f..f1444187b3d3229cdb963afec6fdab15a137e384 100644
+--- a/src/main/java/net/minecraft/world/level/block/BaseCoralPlantTypeBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/BaseCoralPlantTypeBlock.java
+@@ -35,17 +35,7 @@ public class BaseCoralPlantTypeBlock extends Block implements SimpleWaterloggedB
+     }
+ 
+     protected static boolean scanForWater(BlockState state, BlockGetter world, BlockPos pos) {
+-        if (state.getValue(WATERLOGGED)) {
+-            return true;
+-        } else {
+-            for(Direction direction : Direction.values()) {
+-                if (world.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
+-                    return true;
+-                }
+-            }
+-
+-            return false;
+-        }
++        return true;
+     }
+ 
+     @Nullable
+diff --git a/src/main/java/net/minecraft/world/level/block/ConcretePowderBlock.java b/src/main/java/net/minecraft/world/level/block/ConcretePowderBlock.java
+index 23f05720e93a24c605255882d0f38cfcb90a16f9..143ba9f90988b7c4dee213615350eee3418ca63c 100644
+--- a/src/main/java/net/minecraft/world/level/block/ConcretePowderBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/ConcretePowderBlock.java
+@@ -61,7 +61,7 @@ public class ConcretePowderBlock extends FallingBlock {
+     }
+ 
+     private static boolean shouldSolidify(BlockGetter world, BlockPos pos, BlockState state) {
+-        return ConcretePowderBlock.canSolidify(state) || ConcretePowderBlock.touchesLiquid(world, pos);
++        return false;
+     }
+ 
+     private static boolean touchesLiquid(BlockGetter world, BlockPos pos) {
+@@ -88,7 +88,7 @@ public class ConcretePowderBlock extends FallingBlock {
+     }
+ 
+     private static boolean canSolidify(BlockState state) {
+-        return state.getFluidState().is((Tag) FluidTags.WATER);
++        return false;
+     }
+ 
+     @Override
+diff --git a/src/main/java/net/minecraft/world/level/block/CoralBlock.java b/src/main/java/net/minecraft/world/level/block/CoralBlock.java
+index af5d464ad33498a3370723a3a562661eb2f17799..0b976a5d35653f361ebfe17159d354d242ee9e04 100644
+--- a/src/main/java/net/minecraft/world/level/block/CoralBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/CoralBlock.java
+@@ -46,19 +46,7 @@ public class CoralBlock extends Block {
+     }
+ 
+     protected boolean scanForWater(BlockGetter world, BlockPos pos) {
+-        Direction[] aenumdirection = Direction.values();
+-        int i = aenumdirection.length;
+-
+-        for (int j = 0; j < i; ++j) {
+-            Direction enumdirection = aenumdirection[j];
+-            FluidState fluid = world.getFluidState(pos.relative(enumdirection));
+-
+-            if (fluid.is((Tag) FluidTags.WATER)) {
+-                return true;
+-            }
+-        }
+-
+-        return false;
++        return true;
+     }
+ 
+     @Nullable
+diff --git a/src/main/java/net/minecraft/world/level/block/IceBlock.java b/src/main/java/net/minecraft/world/level/block/IceBlock.java
+index df4f2c729f09d5229553308e4876f29de648543f..fbb85b20cec81b4bc7a329ef54fa8f32a588c605 100644
+--- a/src/main/java/net/minecraft/world/level/block/IceBlock.java
++++ b/src/main/java/net/minecraft/world/level/block/IceBlock.java
+@@ -27,16 +27,7 @@ public class IceBlock extends HalfTransparentBlock {
+     public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
+         super.playerDestroy(world, player, pos, state, blockEntity, stack);
+         if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0) {
+-            if (world.dimensionType().ultraWarm()) {
+-                world.removeBlock(pos, false);
+-                return;
+-            }
+-
+-            Material material = world.getBlockState(pos.below()).getMaterial();
+-
+-            if (material.blocksMotion() || material.isLiquid()) {
+-                world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+-            }
++            world.removeBlock(pos, false);
+         }
+ 
+     }
+@@ -50,17 +41,7 @@ public class IceBlock extends HalfTransparentBlock {
+     }
+ 
+     protected void melt(BlockState state, Level world, BlockPos pos) {
+-        // CraftBukkit start
+-        if (org.bukkit.craftbukkit.event.CraftEventFactory.callBlockFadeEvent(world, pos, world.dimensionType().ultraWarm() ? Blocks.AIR.defaultBlockState() : Blocks.WATER.defaultBlockState()).isCancelled()) {
+-            return;
+-        }
+-        // CraftBukkit end
+-        if (world.dimensionType().ultraWarm()) {
+-            world.removeBlock(pos, false);
+-        } else {
+-            world.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+-            world.neighborChanged(pos, Blocks.WATER, pos);
+-        }
++        return;
+     }
+ 
+     @Override
