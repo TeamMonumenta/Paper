@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Sat, 18 Sep 2021 20:22:34 -0400
+Subject: [PATCH] Monumenta - Remove the bukkit:reload command entirely
+
+Signed-off-by: Byron Marohn <combustible@live.com>
+
+diff --git a/src/main/java/org/bukkit/command/SimpleCommandMap.java b/src/main/java/org/bukkit/command/SimpleCommandMap.java
+index 74252236b138969560e6513f24e7ecc6dc4a4127..37d7b6b12c74f6db999c6b507a70d1c34e7ee8a1 100644
+--- a/src/main/java/org/bukkit/command/SimpleCommandMap.java
++++ b/src/main/java/org/bukkit/command/SimpleCommandMap.java
+@@ -36,7 +36,6 @@ public class SimpleCommandMap implements CommandMap {
+ 
+     private void setDefaultCommands() {
+         register("bukkit", new VersionCommand("version"));
+-        register("bukkit", new ReloadCommand("reload"));
+         register("bukkit", new PluginsCommand("plugins"));
+         register("bukkit", new co.aikar.timings.TimingsCommand("timings")); // Paper
+     }
