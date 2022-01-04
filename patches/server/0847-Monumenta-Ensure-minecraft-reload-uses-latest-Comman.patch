@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Byron Marohn <combustible@live.com>
+Date: Sat, 24 Oct 2020 14:57:50 -0400
+Subject: [PATCH] Monumenta - Ensure minecraft:reload uses latest
+ CommandDispatcher
+
+
+diff --git a/src/main/java/net/minecraft/commands/Commands.java b/src/main/java/net/minecraft/commands/Commands.java
+index 1617437515590a32c42687d290dd11bc8fa8edf5..6e14ca74fad6aeabdaf7f99365ec0b0c96435621 100644
+--- a/src/main/java/net/minecraft/commands/Commands.java
++++ b/src/main/java/net/minecraft/commands/Commands.java
+@@ -123,7 +123,8 @@ public class Commands {
+     public static final int LEVEL_GAMEMASTERS = 2;
+     public static final int LEVEL_ADMINS = 3;
+     public static final int LEVEL_OWNERS = 4;
+-    private final com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher = new com.mojang.brigadier.CommandDispatcher();
++    private static com.mojang.brigadier.CommandDispatcher<CommandSourceStack> staticDispatcher = null; // Monumenta
++    private final com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher; // Monumenta
+ 
+     public Commands(Commands.CommandSelection environment) {
+         this(); // CraftBukkit
+@@ -226,6 +227,12 @@ public class Commands {
+ 
+     public Commands() {
+         // CraftBukkkit end
++        // MONUMENTA START
++        if (staticDispatcher == null) {
++            staticDispatcher = new com.mojang.brigadier.CommandDispatcher();
++        }
++        this.dispatcher = staticDispatcher;
++        // MONUMENTA END
+         this.dispatcher.setConsumer((commandcontext, flag, i) -> {
+             ((CommandSourceStack) commandcontext.getSource()).onCommandComplete(commandcontext, flag, i);
+         });
+diff --git a/src/main/java/net/minecraft/server/ServerFunctionLibrary.java b/src/main/java/net/minecraft/server/ServerFunctionLibrary.java
+index 6297652fb2801f2fbbb8b9f773afceed4074e03a..be17ee66416bd868384e7c8367f2cbce0cd91847 100644
+--- a/src/main/java/net/minecraft/server/ServerFunctionLibrary.java
++++ b/src/main/java/net/minecraft/server/ServerFunctionLibrary.java
+@@ -43,6 +43,7 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
+     private volatile TagCollection<CommandFunction> tags = TagCollection.empty();
+     private final int functionCompilationLevel;
+     private final CommandDispatcher<CommandSourceStack> dispatcher;
++    private static boolean initialFunctionLoad = true; // MONUMENTA
+ 
+     public Optional<CommandFunction> getFunction(ResourceLocation id) {
+         return Optional.ofNullable(this.functions.get(id));
+@@ -72,7 +73,14 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
+         }, prepareExecutor);
+         CompletableFuture<Map<ResourceLocation, CompletableFuture<CommandFunction>>> completableFuture2 = CompletableFuture.supplyAsync(() -> {
+             return manager.listResources("functions", (path) -> {
+-                return path.endsWith(".mcfunction");
++                // MONUMENTA START
++                // Don't load functions the first time the server starts up
++                if (initialFunctionLoad) {
++                    return false;
++                } else {
++                    return path.endsWith(".mcfunction");
++                }
++                // MONUMENTA END
+             });
+         }, prepareExecutor).thenCompose((ids) -> {
+             Map<ResourceLocation, CompletableFuture<CommandFunction>> map = Maps.newHashMap();
