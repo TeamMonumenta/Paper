@@ -5,9 +5,18 @@ Subject: [PATCH] Monumenta - Improved score lookup performance
 
 
 diff --git a/src/main/java/net/minecraft/world/scores/Scoreboard.java b/src/main/java/net/minecraft/world/scores/Scoreboard.java
-index 8e6415211fe98be4d1455401bf9158ec6a04265e..fa6c3d9287b400dad79c3af83c5cbe2e95f9ec63 100644
+index 8e6415211fe98be4d1455401bf9158ec6a04265e..da02dc2f8b51395473ff9c1bd56f50729354c241 100644
 --- a/src/main/java/net/minecraft/world/scores/Scoreboard.java
 +++ b/src/main/java/net/minecraft/world/scores/Scoreboard.java
+@@ -56,7 +56,7 @@ public class Scoreboard {
+     }
+ 
+     public final void getObjectivesForCriteria(IScoreboardCriteria iscoreboardcriteria, String s, Consumer<ScoreboardScore> consumer) {
+-        ((List) this.objectivesByCriteria.getOrDefault(iscoreboardcriteria, Collections.emptyList())).forEach((scoreboardobjective) -> {
++        this.objectivesByCriteria.getOrDefault(iscoreboardcriteria, Collections.emptyList()).forEach((scoreboardobjective) -> {
+             consumer.accept(this.getPlayerScoreForObjective(s, scoreboardobjective));
+         });
+     }
 @@ -119,6 +119,10 @@ public class Scoreboard {
          return Lists.newArrayList(this.playerScores.keySet());
      }
