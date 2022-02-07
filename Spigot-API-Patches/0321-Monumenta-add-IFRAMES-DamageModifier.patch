@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Njol <njol@gmx.ch>
+Date: Mon, 7 Feb 2022 11:42:03 +0100
+Subject: [PATCH] Monumenta - add IFRAMES DamageModifier
+
+
+diff --git a/src/main/java/org/bukkit/event/entity/EntityDamageEvent.java b/src/main/java/org/bukkit/event/entity/EntityDamageEvent.java
+index feec8b1e15cd407b7a50cfcfaba11374c0e37e82..a1683f5c3d55d335df5df33424739597f5b5694f 100644
+--- a/src/main/java/org/bukkit/event/entity/EntityDamageEvent.java
++++ b/src/main/java/org/bukkit/event/entity/EntityDamageEvent.java
+@@ -217,6 +217,11 @@ public class EntityDamageEvent extends EntityEvent implements Cancellable {
+          * raw {@link EntityDamageEvent#getDamage()}.
+          */
+         BASE,
++        // Monumenta: added this
++        /**
++         * This represents the damage reduction caused by active iframes.
++         */
++        IFRAMES,
+         /**
+          * This represents the damage reduced by a wearing a helmet when hit
+          * by a falling block.
