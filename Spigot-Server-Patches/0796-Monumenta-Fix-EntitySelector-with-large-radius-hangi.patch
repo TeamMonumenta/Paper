@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Njol <njol@gmx.ch>
+Date: Sat, 5 Mar 2022 20:14:02 +0100
+Subject: [PATCH] Monumenta - Fix EntitySelector with large radius hanging the
+ server
+
+
+diff --git a/src/main/java/net/minecraft/world/level/World.java b/src/main/java/net/minecraft/world/level/World.java
+index f7f593a9e58b537109fa6ca1c783f6614f4bfad5..d2a851b235ef30aef0e267498ca53b2efee2ead4 100644
+--- a/src/main/java/net/minecraft/world/level/World.java
++++ b/src/main/java/net/minecraft/world/level/World.java
+@@ -1176,6 +1176,12 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
+         int j = MathHelper.f((axisalignedbb.maxX + 2.0D) / 16.0D);
+         int k = MathHelper.floor((axisalignedbb.minZ - 2.0D) / 16.0D);
+         int l = MathHelper.f((axisalignedbb.maxZ + 2.0D) / 16.0D);
++
++        // Monumenta - if this would iterate over more than 1000 chunks, iterate over entities instead
++        if (this instanceof WorldServer & ((long) j - i >= 1000L || (long) l - k >= 1000L || ((long) j - i) * ((long) l - k) >= 1000L)) {
++            return (List<T>) ((WorldServer) this).a(entitytypes, (Entity e) -> e.getBoundingBox().c(axisalignedbb) && predicate.test((T) e));
++        }
++
+         List<T> list = Lists.newArrayList();
+ 
+         for (int i1 = i; i1 < j; ++i1) {
