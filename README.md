@@ -1,3 +1,10 @@
+# DEPRECATED
+
+This repo has not been used since Monumenta was on 1.18, roughly September 2023. We then moved to a better [automated paperfork model](https://github.com/TeamMonumenta/monumenta-paperfork) using the automation for 1.19.4, which is now also deprecated. 
+
+As of early 2025, we have moved to mixins: https://github.com/TeamMonumenta/monumenta-mixins
+
+
 Paper [![Build Status](https://papermc.io/ci/job/Paper-1.15/badge/icon)](https://papermc.io/ci/job/Paper-1.15/)
 ===========
 
